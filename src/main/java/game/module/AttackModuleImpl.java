@@ -19,10 +19,7 @@ public class AttackModuleImpl implements AttackModule {
                 .min((o1, o2) -> getDistanceToMe(self, o2).compareTo(getDistanceToMe(self, o1)));
         //self.getRemainingCooldownTicksByAction()[2]
         min.ifPresent(x -> {
-            double angleToUnit = self.getAngleTo(x);
-            if (angleToUnit != 0) {
-                move.setTurn(angleToUnit);
-            }
+            move.setTurn(self.getAngleTo(x));
             move.setSpeed(0);
 
             move.setAction(ActionType.MAGIC_MISSILE);
@@ -30,6 +27,6 @@ public class AttackModuleImpl implements AttackModule {
     }
 
     private Double getDistanceToMe(Wizard self, LivingUnit o1) {
-        return o1.getDistanceTo(self) + o1.getRadius();
+        return o1.getDistanceTo(self) + o1.getRadius() * 0.5;
     }
 }

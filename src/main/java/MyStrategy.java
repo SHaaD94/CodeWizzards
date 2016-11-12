@@ -1,3 +1,4 @@
+import game.LaneTypeExt;
 import game.module.AttackModule;
 import game.module.AttackModuleImpl;
 import game.module.MovementModule;
@@ -7,15 +8,17 @@ import model.*;
 import java.util.Arrays;
 
 public final class MyStrategy implements Strategy {
-    private final MovementModule movementModule = new MovementModuleImpl();
+    private final MovementModule movementModule = new MovementModuleImpl(LaneTypeExt.TOP);
     private final AttackModule attackModule = new AttackModuleImpl();
 
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
-        movementModule.changeMovement(self, world, game, move);
-        attackModule.chooseAttack(self, world, game, move);
+        if (world.getTickIndex() >= 700) {
+            movementModule.changeMovement(self, world, game, move);
+            attackModule.chooseAttack(self, world, game, move);
 
-        interceptMessages(self);
+            interceptMessages(self);
+        }
     }
 
     private void interceptMessages(Wizard self) {
