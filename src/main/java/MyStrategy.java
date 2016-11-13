@@ -1,24 +1,28 @@
 import game.LaneTypeExt;
 import game.module.AttackModule;
-import game.module.AttackModuleImpl;
+import game.module.BehaviourModule;
 import game.module.MovementModule;
-import game.module.MovementModuleImpl;
 import model.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public final class MyStrategy implements Strategy {
-    private final MovementModule movementModule = new MovementModuleImpl(LaneTypeExt.TOP);
-    private final AttackModule attackModule = new AttackModuleImpl();
+    private List<BehaviourModule> behaviours = new ArrayList<>();
+    private boolean isInit;
 
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
-        if (world.getTickIndex() >= 700) {
-            movementModule.changeMovement(self, world, game, move);
-            attackModule.chooseAttack(self, world, game, move);
-
-            interceptMessages(self);
+        if (!isInit) {
+            behaviours.add(new MovementModule(LaneTypeExt.TOP));
+            behaviours.add(new AttackModule());
+            isInit = true;
         }
+
+        behaviours.forEach(x -> x.updateMove(self, world, game, move));
+
+        interceptMessages(self);
     }
 
     private void interceptMessages(Wizard self) {
