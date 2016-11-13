@@ -1,5 +1,3 @@
-package game.module;
-
 import model.*;
 
 import java.util.Arrays;
@@ -19,10 +17,18 @@ public class AttackModule implements BehaviourModule {
                 .min((o1, o2) -> getDistanceToMe(self, o1).compareTo(getDistanceToMe(self, o2)));
         //self.getRemainingCooldownTicksByAction()[2]
         min.ifPresent(x -> {
-            move.setTurn(self.getAngleTo(x));
+            double angleTo = self.getAngleTo(x);
+            move.setTurn(angleTo);
             move.setSpeed(-game.getWizardForwardSpeed());
-            //move.setStrafeSpeed(game.getWizardStrafeSpeed());
-            move.setAction(ActionType.MAGIC_MISSILE);
+            if (StrictMath.abs(self.getAngleTo(x)) < game.getStaffSector() / 2.0D) {
+                move.setAction(ActionType.MAGIC_MISSILE);
+                move.setCastAngle(self.getAngleTo(x));
+                move.setMinCastDistance(self.getDistanceTo(x) - x.getRadius() + game.getMagicMissileRadius());
+            }
+
+//            move.setStrafeSpeed(game.getWizardStrafeSpeed());
+
+            State.setBehaviour(State.BehaviourType.FIGHTING);
         });
     }
 

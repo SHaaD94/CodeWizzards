@@ -1,7 +1,3 @@
-import game.LaneTypeExt;
-import game.module.AttackModule;
-import game.module.BehaviourModule;
-import game.module.MovementModule;
 import model.*;
 
 import java.util.ArrayList;
@@ -15,7 +11,7 @@ public final class MyStrategy implements Strategy {
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
         if (!isInit) {
-            behaviours.add(new MovementModule(LaneTypeExt.TOP));
+            behaviours.add(new MovementModule(LaneType.TOP, new LanePointsHolder(game.getMapSize())));
             behaviours.add(new AttackModule());
             isInit = true;
         }

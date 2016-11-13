@@ -1,5 +1,3 @@
-package game.module;
-
 import model.Game;
 import model.Move;
 import model.Wizard;

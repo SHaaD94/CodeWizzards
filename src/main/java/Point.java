@@ -1,5 +1,3 @@
-package game;
-
 /**
  * Created by SHaaD on 13.11.2016.
  */
