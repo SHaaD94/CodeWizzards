@@ -3,6 +3,7 @@ import model.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -51,12 +52,23 @@ public class MovementModule implements BehaviourModule {
             currentPoint = controlPointsForLane.get(currentPointIndex);
         }
 
-        move.setSpeed(game.getWizardForwardSpeed());
+        boolean shouldRunFromTower = false;
+        if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
+            Optional<Building> closestBuilding = Arrays.stream(world.getBuildings())
+                    .filter(x -> x.getFaction() != self.getFaction())
+                    .min((o1, o2) -> Double.compare(self.getDistanceTo(o1), self.getDistanceTo(o2)));
+            if (closestBuilding.isPresent()) {
+                Building building = closestBuilding.get();
+                shouldRunFromTower = self.getDistanceTo(building) < building.getAttackRange() - 50
+                        && building.getRemainingActionCooldownTicks() <= 70;
+            }
+        }
+        move.setSpeed(shouldRunFromTower ? -game.getWizardForwardSpeed() : game.getWizardForwardSpeed());
         move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
 
-        updateState(self, world, move);
-
         checkCollisions(self, world, game, move);
+
+        updateState(self, world, move);
     }
 
     private void checkCollisions(Wizard self, World world, Game game, Move move) {
@@ -64,21 +76,46 @@ public class MovementModule implements BehaviourModule {
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getBuildings()).map(x -> (CircularUnit) x));
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getMinions()).map(x -> (CircularUnit) x));
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getTrees()).map(x -> (CircularUnit) x));
-
-        circularUnitStream = circularUnitStream.filter(x -> self.getDistanceTo(x) <= self.getVisionRange());
+        circularUnitStream = circularUnitStream.filter(x -> self.getDistanceTo(x) <= Constants.COLLISION_SEARCH_DISTANCE);
 
         List<CircularUnit> unitsInVisionRange = circularUnitStream.collect(Collectors.toList());
+
+        if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
+            Optional<Tree> collidedTree = getCollidedTree(self, world);
+            if (collidedTree.isPresent()) {
+                Tree tree = collidedTree.get();
+
+                AttackUtil.setAttackUnit(self, game, move, tree, ActionType.STAFF);
+                return;
+            }
+        }
 
         int iterationCountRight = getIterationCount(self, game, move, unitsInVisionRange, game.getWizardMaxTurnAngle());
         if (iterationCountRight == 0) {
             return;
         }
+
         int iterationCountLeft = getIterationCount(self, game, move, unitsInVisionRange, -game.getWizardMaxTurnAngle());
 
         move.setTurn(iterationCountLeft <= iterationCountRight ? -game.getWizardMaxTurnAngle() : game.getWizardMaxTurnAngle());
 
         System.out.println(iterationCountRight);
     }
+
+    private Optional<Tree> getCollidedTree(Wizard self, World world) {
+        Point point = GeometryUtil.getNextIterationPosition(self.getAngle(), self.getX(), self.getY());
+        List<Tree> trees = Arrays.stream(world.getTrees())
+                //.filter(x -> self.getDistanceTo(x) <= Constants.TREE_COLLISION_SEARCH_DISTANCE)
+                .filter(x -> GeometryUtil.areCollides(point.getX(), point.getY(), self.getRadius(), x.getX(), x.getY(), x.getRadius()))
+                .collect(Collectors.toList());
+/*todo: refactor this
+        if (trees.size() <= Constants.TREE_BYPASS_COUNT) {
+            return Optional.empty();
+        }
+*/
+        return trees.stream().findFirst();
+    }
+
 
     private int getIterationCount(Wizard self, Game game, Move move, List<CircularUnit> unitsInVisionRange, double rotateAngle) {
         int iterationCount = 0;
@@ -89,12 +126,12 @@ public class MovementModule implements BehaviourModule {
         while (hasCollisions) {
             hasCollisions = false;
             //todo: improve, for now it is ok
-            Point point = GeometryUtil.getNextIterationPosition(self.getAngle(), currentX, currentY);
+            Point nextLocation = GeometryUtil.getNextIterationPosition(self.getAngle(), currentX, currentY);
 
             long collisionCount = unitsInVisionRange.stream().filter(x ->
-                    GeometryUtil.areCollides(point.getX(), point.getY(), self.getRadius(), x.getX(), x.getY(), x.getRadius()))
+                    GeometryUtil.areCollides(nextLocation.getX(), nextLocation.getY(), self.getRadius(), x.getX(), x.getY(), x.getRadius()))
                     .count();
-            if (collisionCount != 0) {
+            if (collisionCount != 0 || mapCollisionsExist(self, nextLocation, prevWorld)) {
                 currentAngle += rotateAngle;
                 Point newPoint = GeometryUtil.getNextIterationPosition(currentAngle, currentX, currentY);
                 currentX = newPoint.getX();
@@ -107,6 +144,13 @@ public class MovementModule implements BehaviourModule {
             move.setTurn(game.getWizardMaxTurnAngle());
         }
         return iterationCount;
+    }
+
+    private boolean mapCollisionsExist(Wizard self, Point nextLocation, World world) {
+        return nextLocation.getX() - self.getRadius() <= 0
+                || nextLocation.getX() + self.getRadius() >= world.getWidth()
+                || nextLocation.getY() - self.getRadius() <= 0
+                || nextLocation.getY() + self.getRadius() >= world.getHeight();
     }
 
     private boolean isLowHealthAndNotFirstPoint(Wizard self, ArrayList<Point> controlPointsForLane) {

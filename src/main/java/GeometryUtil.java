@@ -22,6 +22,6 @@ public class GeometryUtil {
     }
 
     public static Point getNextIterationPosition(double angle, double x, double y) {
-        return GeometryUtil.rotateByAngle(angle, x + 5, y, x, y);
+        return GeometryUtil.rotateByAngle(angle, x + 4, y, x, y);
     }
 }

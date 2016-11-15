@@ -12,10 +12,11 @@ public class State {
         State.behaviour = behaviour;
     }
 
-    public static enum BehaviourType {
+    public enum BehaviourType {
         DEAD,
         MOVING,
         FIGHTING,
-        ESCAPING
+        ESCAPING,
+        GOING_FOR_RUNE
     }
 }

@@ -36,7 +36,7 @@ public class GeometryUtilTest {
     }
 
     @Test
-    public void shoulNotCollide() throws Exception {
+    public void shouldNotCollide() throws Exception {
         double x1 = 0, y1 = 0, r1 = 1;
         double x2 = 5, y2 = 5, r2 = 1;
 
@@ -46,7 +46,7 @@ public class GeometryUtilTest {
     }
 
     @Test
-    public void shoulCollide() throws Exception {
+    public void shouldCollide() throws Exception {
         double x1 = 264.4620171830669, y1 = 3584.823934093803, r1 = 35;
         double x2 = 400, y2 = 3600, r2 = 100;
 

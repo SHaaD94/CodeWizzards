@@ -14,7 +14,8 @@ public class AttackModule implements BehaviourModule {
         Stream<LivingUnit> units = getLivingUnitStream(world);
 
         Optional<LivingUnit> min = units
-                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> x.getFaction() != self.getFaction()
+                        /*&& (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE && x.getFaction() != Faction.NEUTRAL)*/)
                 .filter(x -> getDistanceToMe(self, x) <= self.getCastRange())
                 .min((o1, o2) -> {
                     int compareResult = getDistanceToMe(self, o1).compareTo(getDistanceToMe(self, o2));
@@ -33,14 +34,8 @@ public class AttackModule implements BehaviourModule {
                 });
         //self.getRemainingCooldownTicksByAction()[2]
         min.ifPresent(x -> {
-            double angleTo = self.getAngleTo(x);
-            move.setTurn(angleTo);
             move.setSpeed(-game.getWizardForwardSpeed());
-            if (StrictMath.abs(self.getAngleTo(x)) < game.getStaffSector() / 2.0D) {
-                move.setAction(ActionType.MAGIC_MISSILE);
-                move.setCastAngle(self.getAngleTo(x));
-                move.setMinCastDistance(self.getDistanceTo(x) - x.getRadius() - game.getMagicMissileRadius());
-            }
+            AttackUtil.setAttackUnit(self, game, move, x, ActionType.MAGIC_MISSILE);
 
             //move.setStrafeSpeed(game.getWizardStrafeSpeed());
 
