@@ -11,13 +11,15 @@ public final class MyStrategy implements Strategy {
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
         if (!isInit) {
+/*
             LaneType laneType = LaneType.TOP;
             if (self.getId() == 5 || self.getId() == 6) {
                 laneType = LaneType.MIDDLE;
             } else if (self.getId() > 6) {
                 laneType = LaneType.BOTTOM;
             }
-            behaviours.add(new MovementModule(laneType, new LanePointsHolder(game.getMapSize())));
+*/
+            behaviours.add(new MovementModule(LaneType.TOP, new LanePointsHolder(game.getMapSize())));
             behaviours.add(new AttackModule());
             isInit = true;
         }

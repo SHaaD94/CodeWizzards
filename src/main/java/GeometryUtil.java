@@ -14,4 +14,14 @@ public class GeometryUtil {
         double rr = r1 + r2;
         return Math.pow(dx, 2) + Math.pow(dy, 2) < Math.pow(rr, 2);
     }
+
+    public static Point rotateByAngle(double angle, double x, double y, double xc, double yc) {
+        double newX = Math.cos(angle) * (x - xc) - Math.sin(angle) * (y - yc) + xc;
+        double newY = Math.sin(angle) * (x - xc) + Math.cos(angle) * (y - yc) + yc;
+        return new Point(newX, newY);
+    }
+
+    public static Point getNextIterationPosition(double angle, double x, double y) {
+        return GeometryUtil.rotateByAngle(angle, x + 5, y, x, y);
+    }
 }

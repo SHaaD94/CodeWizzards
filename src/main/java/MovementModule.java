@@ -2,6 +2,8 @@ import model.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class MovementModule implements BehaviourModule {
@@ -15,7 +17,6 @@ public class MovementModule implements BehaviourModule {
     private boolean isInitialized;
 
     private int currentPointIndex;
-    private int currentPointIncrementor;
 
     public MovementModule(LaneType laneType, LanePointsHolder lanePointsHolder) {
         this.laneType = laneType;
@@ -39,14 +40,14 @@ public class MovementModule implements BehaviourModule {
 
         Point currentPoint = controlPointsForLane.get(currentPointIndex);
         if (isLowHealthAndNotFirstPoint(self, controlPointsForLane)) {
-            currentPointIndex -= currentPointIncrementor;
+            currentPointIndex--;
             currentPoint = controlPointsForLane.get(currentPointIndex);
             State.setBehaviour(State.BehaviourType.ESCAPING);
         }
 
         double distanceToPoint = self.getDistanceTo(currentPoint.getX(), currentPoint.getY());
         if (distanceToPoint <= Constants.POINT_RADIUS && State.getBehaviour() != State.BehaviourType.ESCAPING) {
-            currentPointIndex += currentPointIncrementor;
+            currentPointIndex++;
             currentPoint = controlPointsForLane.get(currentPointIndex);
         }
 
@@ -55,24 +56,57 @@ public class MovementModule implements BehaviourModule {
 
         updateState(self, world, move);
 
-        //todo: should be implemented
-        //checkCollisions(self, world, game, move);
+        checkCollisions(self, world, game, move);
     }
 
     private void checkCollisions(Wizard self, World world, Game game, Move move) {
-        Stream<CircularUnit> circularUnitStream = /*Arrays.stream(world.getWizards()).filter(x -> !x.isMe()).map(x -> (CircularUnit) x);
-        circularUnitStream = Stream.concat(circularUnitStream, */Arrays.stream(world.getBuildings()).map(x -> (CircularUnit) x);
-        /*circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getMinions()).map(x -> (CircularUnit) x));
+        Stream<CircularUnit> circularUnitStream = Arrays.stream(world.getWizards()).filter(x -> !x.isMe()).map(x -> (CircularUnit) x);
+        circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getBuildings()).map(x -> (CircularUnit) x));
+        circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getMinions()).map(x -> (CircularUnit) x));
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getTrees()).map(x -> (CircularUnit) x));
-*/
-        Point point = new Point(self.getX() - self.getSpeedX() * 3, self.getY() - self.getSpeedY() * 3);
-        long count = circularUnitStream.filter(x ->
-                GeometryUtil.areCollides(point.getX(), point.getY(), self.getRadius(), x.getX(), x.getY(), x.getRadius()))
-                .peek(System.out::println)
-                .count();
-        if (count != 0) {
+
+        circularUnitStream = circularUnitStream.filter(x -> self.getDistanceTo(x) <= self.getVisionRange());
+
+        List<CircularUnit> unitsInVisionRange = circularUnitStream.collect(Collectors.toList());
+
+        int iterationCountRight = getIterationCount(self, game, move, unitsInVisionRange, game.getWizardMaxTurnAngle());
+        if (iterationCountRight == 0) {
+            return;
+        }
+        int iterationCountLeft = getIterationCount(self, game, move, unitsInVisionRange, -game.getWizardMaxTurnAngle());
+
+        move.setTurn(iterationCountLeft <= iterationCountRight ? -game.getWizardMaxTurnAngle() : game.getWizardMaxTurnAngle());
+
+        System.out.println(iterationCountRight);
+    }
+
+    private int getIterationCount(Wizard self, Game game, Move move, List<CircularUnit> unitsInVisionRange, double rotateAngle) {
+        int iterationCount = 0;
+        double currentAngle = self.getAngle();
+        double currentX = self.getX();
+        double currentY = self.getY();
+        boolean hasCollisions = true;
+        while (hasCollisions) {
+            hasCollisions = false;
+            //todo: improve, for now it is ok
+            Point point = GeometryUtil.getNextIterationPosition(self.getAngle(), currentX, currentY);
+
+            long collisionCount = unitsInVisionRange.stream().filter(x ->
+                    GeometryUtil.areCollides(point.getX(), point.getY(), self.getRadius(), x.getX(), x.getY(), x.getRadius()))
+                    .count();
+            if (collisionCount != 0) {
+                currentAngle += rotateAngle;
+                Point newPoint = GeometryUtil.getNextIterationPosition(currentAngle, currentX, currentY);
+                currentX = newPoint.getX();
+                currentY = newPoint.getY();
+                iterationCount++;
+                hasCollisions = true;
+            }
+        }
+        if (iterationCount != 0) {
             move.setTurn(game.getWizardMaxTurnAngle());
         }
+        return iterationCount;
     }
 
     private boolean isLowHealthAndNotFirstPoint(Wizard self, ArrayList<Point> controlPointsForLane) {
@@ -88,10 +122,8 @@ public class MovementModule implements BehaviourModule {
             updateState(self, world, move);
             if (self.getFaction() == Faction.ACADEMY) {
                 currentPointIndex = 0;
-                currentPointIncrementor = 1;
             } else {
                 currentPointIndex = lanePointsHolder.getControlPointsForLane(laneType).size() - 1;
-                currentPointIncrementor = -1;
             }
         }
 
