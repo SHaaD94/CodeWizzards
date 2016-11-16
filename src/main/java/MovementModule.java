@@ -17,8 +17,6 @@ public class MovementModule implements BehaviourModule {
 
     private boolean isInitialized;
 
-    private int currentPointIndex;
-
     public MovementModule(LaneType laneType, LanePointsHolder lanePointsHolder) {
         this.laneType = laneType;
         this.lanePointsHolder = lanePointsHolder;
@@ -35,35 +33,24 @@ public class MovementModule implements BehaviourModule {
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(laneType);
 
         if (isStateNotMoving()) {
-            currentPointIndex = getNearestPoint(self, controlPointsForLane);
+            State.setCurrentPointIndex(getNearestPoint(self, controlPointsForLane));
             State.setBehaviour(State.BehaviourType.MOVING);
         }
 
-        Point currentPoint = controlPointsForLane.get(currentPointIndex);
+        Point currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
         if (isLowHealthAndNotFirstPoint(self, controlPointsForLane)) {
-            currentPointIndex--;
-            currentPoint = controlPointsForLane.get(currentPointIndex);
+            State.reduceCurrentPointIndex();
+            currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
             State.setBehaviour(State.BehaviourType.ESCAPING);
         }
 
         double distanceToPoint = self.getDistanceTo(currentPoint.getX(), currentPoint.getY());
         if (distanceToPoint <= Constants.POINT_RADIUS && State.getBehaviour() != State.BehaviourType.ESCAPING) {
-            currentPointIndex++;
-            currentPoint = controlPointsForLane.get(currentPointIndex);
+            State.increaseCurrentPointIndex();
+            currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
         }
 
-        boolean shouldRunFromTower = false;
-        if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
-            Optional<Building> closestBuilding = Arrays.stream(world.getBuildings())
-                    .filter(x -> x.getFaction() != self.getFaction())
-                    .min((o1, o2) -> Double.compare(self.getDistanceTo(o1), self.getDistanceTo(o2)));
-            if (closestBuilding.isPresent()) {
-                Building building = closestBuilding.get();
-                shouldRunFromTower = self.getDistanceTo(building) < building.getAttackRange() - 50
-                        && building.getRemainingActionCooldownTicks() <= 70;
-            }
-        }
-        move.setSpeed(shouldRunFromTower ? -game.getWizardForwardSpeed() : game.getWizardForwardSpeed());
+        move.setSpeed(game.getWizardForwardSpeed());
         move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
 
         checkCollisions(self, world, game, move);
@@ -154,7 +141,9 @@ public class MovementModule implements BehaviourModule {
     }
 
     private boolean isLowHealthAndNotFirstPoint(Wizard self, ArrayList<Point> controlPointsForLane) {
-        return self.getLife() <= self.getMaxLife() * 0.5 && currentPointIndex > 0 && currentPointIndex < controlPointsForLane.size();
+        return self.getLife() <= self.getMaxLife() * 0.5
+                && State.getCurrentPointIndex() > 0
+                && State.getCurrentPointIndex() < controlPointsForLane.size();
     }
 
     private boolean isStateNotMoving() {
@@ -164,11 +153,14 @@ public class MovementModule implements BehaviourModule {
     private void init(Wizard self, World world, Move move) {
         if (!isInitialized) {
             updateState(self, world, move);
+            State.setCurrentPointIndex(0);
+/*
             if (self.getFaction() == Faction.ACADEMY) {
                 currentPointIndex = 0;
             } else {
                 currentPointIndex = lanePointsHolder.getControlPointsForLane(laneType).size() - 1;
             }
+*/
         }
 
         isInitialized = true;

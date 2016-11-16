@@ -17,8 +17,9 @@ public final class MyStrategy implements Strategy {
             } else if (self.getId() > 6) {
                 laneType = LaneType.BOTTOM;
             }
-            behaviours.add(new MovementModule(laneType, new LanePointsHolder(game.getMapSize())));
-            behaviours.add(new AttackModule());
+            LanePointsHolder lanePointsHolder = new LanePointsHolder(game.getMapSize());
+            behaviours.add(new MovementModule(laneType, lanePointsHolder));
+            behaviours.add(new AttackModule(laneType, lanePointsHolder));
             isInit = true;
         }
         behaviours.forEach(x -> x.updateMove(self, world, game, move));

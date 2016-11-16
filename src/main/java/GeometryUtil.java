@@ -1,5 +1,7 @@
 import model.CircularUnit;
 
+import static java.lang.StrictMath.hypot;
+
 /**
  * Created by SHaaD on 13.11.2016.
  */
@@ -23,5 +25,9 @@ public class GeometryUtil {
 
     public static Point getNextIterationPosition(double angle, double x, double y) {
         return GeometryUtil.rotateByAngle(angle, x + 4, y, x, y);
+    }
+
+    public static double getDistanceBetweenPoints(Point p1, Point p2) {
+        return hypot(p1.getX() - p2.getX(), p1.getY() - p2.getY());
     }
 }
