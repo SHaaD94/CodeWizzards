@@ -50,7 +50,6 @@ public class AttackModule implements BehaviourModule {
                     .count();
             if (self.getDistanceTo(x) <= self.getCastRange() * 0.7 || wizardCount >= 2) {
                 move.setSpeed(-game.getWizardForwardSpeed());
-                // TODO: 17.11.2016 REFACTOR THIS HELL, btw strafe method doesn't work right
                 checkIfCurrentPointIsPassed(self);
                 setStrafeSpeed(self, game, move);
             }
@@ -59,8 +58,6 @@ public class AttackModule implements BehaviourModule {
                     ? ActionType.MAGIC_MISSILE
                     : ActionType.STAFF;
             AttackUtil.setAttackUnit(self, game, move, x, attack);
-
-            //move.setStrafeSpeed(game.getWizardStrafeSpeed());
 
             State.setBehaviour(State.BehaviourType.FIGHTING);
         });
@@ -80,7 +77,11 @@ public class AttackModule implements BehaviourModule {
     }
 
     private void setStrafeSpeed(Wizard self, Game game, Move move) {
-        Point point = lanePointsHolder.getControlPointsForLane(laneType).get(State.getCurrentPointIndex());
+        int currentPointIndex = State.getCurrentPointIndex();
+        if (currentPointIndex > 0) {
+            currentPointIndex--;
+        }
+        Point point = lanePointsHolder.getControlPointsForLane(laneType).get(currentPointIndex);
         Point leftStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() - PI / 2, self.getX(), self.getY());
         Point rightStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() + PI / 2, self.getX(), self.getY());
 

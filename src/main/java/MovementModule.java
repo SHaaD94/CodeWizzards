@@ -38,7 +38,7 @@ public class MovementModule implements BehaviourModule {
         }
 
         Point currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
-        if (isLowHealthAndNotFirstPoint(self, controlPointsForLane)) {
+        if (shouldEscape(self, world, game, controlPointsForLane)) {
             State.reduceCurrentPointIndex();
             currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
             State.setBehaviour(State.BehaviourType.ESCAPING);
@@ -85,8 +85,6 @@ public class MovementModule implements BehaviourModule {
         int iterationCountLeft = getIterationCount(self, game, move, unitsInVisionRange, -game.getWizardMaxTurnAngle());
 
         move.setTurn(iterationCountLeft <= iterationCountRight ? -game.getWizardMaxTurnAngle() : game.getWizardMaxTurnAngle());
-
-        System.out.println(iterationCountRight);
     }
 
     private Optional<Tree> getCollidedTree(Wizard self, World world) {
@@ -140,10 +138,41 @@ public class MovementModule implements BehaviourModule {
                 || nextLocation.getY() + self.getRadius() >= world.getHeight();
     }
 
-    private boolean isLowHealthAndNotFirstPoint(Wizard self, ArrayList<Point> controlPointsForLane) {
-        return self.getLife() <= self.getMaxLife() * 0.5
-                && State.getCurrentPointIndex() > 0
-                && State.getCurrentPointIndex() < controlPointsForLane.size();
+    private boolean shouldEscape(Wizard self, World world, Game game, ArrayList<Point> controlPointsForLane) {
+        boolean escapeAvailable = State.getCurrentPointIndex() > 0 && State.getCurrentPointIndex() < controlPointsForLane.size();
+        if (!escapeAvailable) {
+            return false;
+        }
+        double lifeRemaining = self.getLife() * 1.0 / self.getMaxLife();
+        if (lifeRemaining >= 0.5) {
+            return false;
+        }
+        boolean buildingThreatExists = Arrays.stream(world.getBuildings())
+                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 50)
+                .findAny().isPresent();
+        if (buildingThreatExists) {
+            return true;
+        }
+
+        boolean wizardThreatExists = Arrays.stream(world.getWizards())
+                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 50)
+                .findAny().isPresent();
+        if (wizardThreatExists) {
+            return true;
+        }
+
+        boolean minionThreatExists = Arrays.stream(world.getMinions())
+                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> game.getDartRadius() <= self.getDistanceTo(x)
+                        || game.getOrcWoodcutterAttackRange() <= self.getDistanceTo(x))
+                .findFirst().isPresent();
+        if (minionThreatExists && lifeRemaining <= 0.3) {
+            return true;
+        }
+
+        return false;
     }
 
     private boolean isStateNotMoving() {
@@ -154,13 +183,6 @@ public class MovementModule implements BehaviourModule {
         if (!isInitialized) {
             updateState(self, world, move);
             State.setCurrentPointIndex(0);
-/*
-            if (self.getFaction() == Faction.ACADEMY) {
-                currentPointIndex = 0;
-            } else {
-                currentPointIndex = lanePointsHolder.getControlPointsForLane(laneType).size() - 1;
-            }
-*/
         }
 
         isInitialized = true;
