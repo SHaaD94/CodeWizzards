@@ -3,6 +3,7 @@ import model.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public final class MyStrategy implements Strategy {
     private List<BehaviourModule> behaviours = new ArrayList<>();
@@ -11,12 +12,20 @@ public final class MyStrategy implements Strategy {
     @Override
     public void move(Wizard self, World world, Game game, Move move) {
         if (!isInit) {
-            LaneType laneType = LaneType.TOP;
-            if (self.getId() == 5 || self.getId() == 6) {
-                laneType = LaneType.MIDDLE;
-            } else if (self.getId() > 6) {
-                laneType = LaneType.BOTTOM;
+            LaneType laneType;
+            int i = new Random().nextInt(3);
+            switch (i) {
+                case 0:
+                    laneType = LaneType.TOP;
+                    break;
+                case 1:
+                    laneType = LaneType.MIDDLE;
+                    break;
+                default:
+                    laneType = LaneType.BOTTOM;
+                    break;
             }
+
             LanePointsHolder lanePointsHolder = new LanePointsHolder(game.getMapSize());
             behaviours.add(new MovementModule(laneType, lanePointsHolder));
             behaviours.add(new AttackModule(laneType, lanePointsHolder));

@@ -1,11 +1,13 @@
 /**
  * Created by SHaaD on 13.11.2016.
  */
-//todo: remove this singlethone
+//todo: remove this singleton
 public class State {
     private static BehaviourType behaviour = BehaviourType.MOVING;
 
     private static int currentPointIndex;
+
+    private static int lastRuneIndex;
 
     public static BehaviourType getBehaviour() {
         return behaviour;
@@ -31,7 +33,17 @@ public class State {
         State.currentPointIndex++;
     }
 
+    public static int getLastRuneIndex() {
+        return lastRuneIndex;
+    }
+
+    public static void increaseLastRuneIndex() {
+        lastRuneIndex++;
+    }
+
+
     public enum BehaviourType {
+        NONE,
         DEAD,
         MOVING,
         FIGHTING,

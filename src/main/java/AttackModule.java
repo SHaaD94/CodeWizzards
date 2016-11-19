@@ -18,15 +18,14 @@ public class AttackModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-        if (State.getBehaviour() == State.BehaviourType.ESCAPING) {
+        if (State.getBehaviour() == State.BehaviourType.ESCAPING || State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE) {
             return;
         }
 
         Stream<LivingUnit> units = getLivingUnitStream(world);
 
         Optional<LivingUnit> min = units
-                .filter(x -> x.getFaction() != self.getFaction()
-                        /*&& (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE && x.getFaction() != Faction.NEUTRAL)*/)
+                .filter(x -> x.getFaction() != self.getFaction())
                 .filter(x -> getDistanceToMe(self, x) <= self.getCastRange())
                 .min((o1, o2) -> {
                     int compareResult = getDistanceToMe(self, o1).compareTo(getDistanceToMe(self, o2));
@@ -50,24 +49,27 @@ public class AttackModule implements BehaviourModule {
                     .count();
             if (self.getDistanceTo(x) <= self.getCastRange() * 0.7 || wizardCount >= 2) {
                 move.setSpeed(-game.getWizardForwardSpeed());
-                checkIfCurrentPointIsPassed(self);
-                setStrafeSpeed(self, game, move);
+
+                int currentPointIndex = getPreviousPointIndex();
+
+                checkIfCurrentPointIsPassed(self, currentPointIndex);
+                setStrafeSpeed(self, currentPointIndex, game, move);
             }
-            //MAGIC_MISSILE cooldown
-            ActionType attack = self.getRemainingCooldownTicksByAction()[2] == 0
-                    ? ActionType.MAGIC_MISSILE
-                    : ActionType.STAFF;
-            AttackUtil.setAttackUnit(self, game, move, x, attack);
+            AttackUtil.setAttackUnit(self, game, move, x);
 
             State.setBehaviour(State.BehaviourType.FIGHTING);
         });
     }
 
-    private void checkIfCurrentPointIsPassed(Wizard self) {
+    private int getPreviousPointIndex() {
         int currentPointIndex = State.getCurrentPointIndex();
         if (currentPointIndex > 0) {
             currentPointIndex--;
         }
+        return currentPointIndex;
+    }
+
+    private void checkIfCurrentPointIsPassed(Wizard self, int currentPointIndex) {
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(laneType);
         Point currentPoint = controlPointsForLane.get(currentPointIndex);
         double distanceToPoint = self.getDistanceTo(currentPoint.getX(), currentPoint.getY());
@@ -76,11 +78,7 @@ public class AttackModule implements BehaviourModule {
         }
     }
 
-    private void setStrafeSpeed(Wizard self, Game game, Move move) {
-        int currentPointIndex = State.getCurrentPointIndex();
-        if (currentPointIndex > 0) {
-            currentPointIndex--;
-        }
+    private void setStrafeSpeed(Wizard self, int currentPointIndex, Game game, Move move) {
         Point point = lanePointsHolder.getControlPointsForLane(laneType).get(currentPointIndex);
         Point leftStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() - PI / 2, self.getX(), self.getY());
         Point rightStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() + PI / 2, self.getX(), self.getY());
@@ -97,7 +95,8 @@ public class AttackModule implements BehaviourModule {
     private Stream<LivingUnit> getLivingUnitStream(World world) {
         Stream<LivingUnit> units = Arrays.stream(world.getWizards());
         units = Stream.concat(units, Arrays.stream(world.getBuildings()));
-        units = Stream.concat(units, Arrays.stream(world.getMinions()));
+        units = Stream.concat(units, Arrays.stream(world.getMinions())
+                .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0)));
         return units;
     }
 

@@ -32,8 +32,11 @@ public class MovementModule implements BehaviourModule {
 
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(laneType);
 
-        if (isStateNotMoving()) {
-            State.setCurrentPointIndex(getNearestPoint(self, controlPointsForLane));
+        updateRuneStatus(world, game);
+        handleRuneBehaviour(self, world, game);
+
+        if (isStateNotMoving() && State.getBehaviour() != State.BehaviourType.GOING_FOR_RUNE) {
+            State.setCurrentPointIndex(Utils.getNearestPoint(self, controlPointsForLane));
             State.setBehaviour(State.BehaviourType.MOVING);
         }
 
@@ -51,11 +54,48 @@ public class MovementModule implements BehaviourModule {
         }
 
         move.setSpeed(game.getWizardForwardSpeed());
-        move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
+        if (State.getBehaviour() != State.BehaviourType.GOING_FOR_RUNE) {
+            move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
+        } else {
+            Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
+            move.setTurn(self.getAngleTo(nearestRune.getX(), nearestRune.getY()));
+        }
 
         checkCollisions(self, world, game, move);
 
         updateState(self, world, move);
+
+        System.out.println(State.getBehaviour());
+    }
+
+    private void handleRuneBehaviour(Wizard self, World world, Game game) {
+        if (shouldGoForRune(self, world, game)) {
+            Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
+
+            double distanceToNearestRune = self.getDistanceTo(nearestRune.getX(), nearestRune.getY());
+
+            long bonusCount = Arrays.stream(world.getBonuses())
+                    .filter(x -> self.getDistanceTo(x) <= Constants.RUNE_SCAN_DISTANCE).count();
+
+            int runeInterval = game.getBonusAppearanceIntervalTicks();
+
+            boolean runePickedUpOrDoesntExist = distanceToNearestRune == 0 ||
+                    (distanceToNearestRune <= self.getVisionRange() - 20 && bonusCount == 0);
+
+            if (runePickedUpOrDoesntExist && getTicksToReachRune(self, game, distanceToNearestRune) < 1) {
+                State.setBehaviour(State.BehaviourType.NONE);
+                State.increaseLastRuneIndex();
+            } else {
+                State.setBehaviour(State.BehaviourType.GOING_FOR_RUNE);
+            }
+        }
+    }
+
+    private void updateRuneStatus(World world, Game game) {
+        if (State.getLastRuneIndex() / game.getBonusAppearanceIntervalTicks()
+                < world.getTickIndex() / game.getBonusAppearanceIntervalTicks()) {
+            //todo: update rune check index here
+        }
     }
 
     private void checkCollisions(Wizard self, World world, Game game, Move move) {
@@ -67,42 +107,39 @@ public class MovementModule implements BehaviourModule {
 
         List<CircularUnit> unitsInVisionRange = circularUnitStream.collect(Collectors.toList());
 
-        if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
-            Optional<Tree> collidedTree = getCollidedTree(self, world);
-            if (collidedTree.isPresent()) {
-                Tree tree = collidedTree.get();
-
-                AttackUtil.setAttackUnit(self, game, move, tree, ActionType.STAFF);
-                return;
-            }
+        Optional<Tree> collidedTree = getCollidedTree(self, world);
+        if (collidedTree.isPresent()) {
+            Tree tree = collidedTree.get();
+            AttackUtil.setAttackUnit(self, game, move, tree);
+            return;
         }
 
-        int iterationCountRight = getIterationCount(self, game, move, unitsInVisionRange, game.getWizardMaxTurnAngle());
+        int iterationCountRight = getIterationCount(self, world, game, move, unitsInVisionRange, game.getWizardMaxTurnAngle());
         if (iterationCountRight == 0) {
             return;
         }
 
-        int iterationCountLeft = getIterationCount(self, game, move, unitsInVisionRange, -game.getWizardMaxTurnAngle());
+        int iterationCountLeft = getIterationCount(self, world, game, move, unitsInVisionRange, -game.getWizardMaxTurnAngle());
 
-        move.setTurn(iterationCountLeft <= iterationCountRight ? -game.getWizardMaxTurnAngle() : game.getWizardMaxTurnAngle());
+        if (iterationCountLeft <= iterationCountRight) {
+            move.setTurn(-game.getWizardMaxTurnAngle());
+            move.setStrafeSpeed(-game.getWizardStrafeSpeed());
+        } else {
+            move.setTurn(game.getWizardMaxTurnAngle());
+            move.setStrafeSpeed(game.getWizardStrafeSpeed());
+        }
     }
 
     private Optional<Tree> getCollidedTree(Wizard self, World world) {
         Point point = GeometryUtil.getNextIterationPosition(self.getAngle(), self.getX(), self.getY());
         List<Tree> trees = Arrays.stream(world.getTrees())
-                //.filter(x -> self.getDistanceTo(x) <= Constants.TREE_COLLISION_SEARCH_DISTANCE)
                 .filter(x -> GeometryUtil.areCollides(point.getX(), point.getY(), self.getRadius(), x.getX(), x.getY(), x.getRadius()))
                 .collect(Collectors.toList());
-/*todo: refactor this
-        if (trees.size() <= Constants.TREE_BYPASS_COUNT) {
-            return Optional.empty();
-        }
-*/
         return trees.stream().findFirst();
     }
 
 
-    private int getIterationCount(Wizard self, Game game, Move move, List<CircularUnit> unitsInVisionRange, double rotateAngle) {
+    private int getIterationCount(Wizard self, World world, Game game, Move move, List<CircularUnit> unitsInVisionRange, double rotateAngle) {
         int iterationCount = 0;
         double currentAngle = self.getAngle();
         double currentX = self.getX();
@@ -116,7 +153,7 @@ public class MovementModule implements BehaviourModule {
             long collisionCount = unitsInVisionRange.stream().filter(x ->
                     GeometryUtil.areCollides(nextLocation.getX(), nextLocation.getY(), self.getRadius(), x.getX(), x.getY(), x.getRadius()))
                     .count();
-            if (collisionCount != 0 || mapCollisionsExist(self, nextLocation, prevWorld)) {
+            if (collisionCount != 0 || mapCollisionsExist(self, nextLocation, world)) {
                 currentAngle += rotateAngle;
                 Point newPoint = GeometryUtil.getNextIterationPosition(currentAngle, currentX, currentY);
                 currentX = newPoint.getX();
@@ -164,15 +201,14 @@ public class MovementModule implements BehaviourModule {
         }
 
         boolean minionThreatExists = Arrays.stream(world.getMinions())
+                .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0))
                 .filter(x -> x.getFaction() != self.getFaction())
                 .filter(x -> game.getDartRadius() <= self.getDistanceTo(x)
                         || game.getOrcWoodcutterAttackRange() <= self.getDistanceTo(x))
                 .findFirst().isPresent();
-        if (minionThreatExists && lifeRemaining <= 0.3) {
-            return true;
-        }
 
-        return false;
+        return minionThreatExists && lifeRemaining <= 0.3;
+
     }
 
     private boolean isStateNotMoving() {
@@ -188,17 +224,24 @@ public class MovementModule implements BehaviourModule {
         isInitialized = true;
     }
 
-    private int getNearestPoint(Wizard self, ArrayList<Point> points) {
-        int minIndex = 0;
-        double minDistance = Double.MAX_VALUE;
-        for (int i = 0; i < points.size(); i++) {
-            double currentDistance = self.getDistanceTo(points.get(i).getX(), points.get(i).getY());
-            if (currentDistance < minDistance) {
-                minDistance = currentDistance;
-                minIndex = i;
-            }
+    private boolean shouldGoForRune(Wizard self, World world, Game game) {
+        Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
+        double distanceToNearestRune = self.getDistanceTo(nearestRune.getX(), nearestRune.getY());
+
+        if (distanceToNearestRune > Constants.RUNE_ATTRACT_RADIUS) {
+            return false;
         }
-        return minIndex;
+
+        int runeInterval = game.getBonusAppearanceIntervalTicks();
+
+        int currentTickWithTimeForReachingRune = world.getTickIndex() + getTicksToReachRune(self, game, distanceToNearestRune);
+
+        return currentTickWithTimeForReachingRune / runeInterval > State.getLastRuneIndex()
+                || world.getTickIndex() / runeInterval > State.getLastRuneIndex();
+    }
+
+    private int getTicksToReachRune(Wizard self, Game game, double distanceToNearestRune) {
+        return (int) ((distanceToNearestRune - self.getRadius()) / game.getWizardForwardSpeed()) + 1;
     }
 
     private void updateState(Wizard self, World world, Move move) {

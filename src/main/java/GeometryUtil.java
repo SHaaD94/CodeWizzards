@@ -27,6 +27,10 @@ public class GeometryUtil {
         return GeometryUtil.rotateByAngle(angle, x + 4, y, x, y);
     }
 
+    public static Point getNextIterationPosition(double speedX, double angle, double x, double y) {
+        return GeometryUtil.rotateByAngle(angle, x + speedX, y, x, y);
+    }
+
     public static double getDistanceBetweenPoints(Point p1, Point p2) {
         return hypot(p1.getX() - p2.getX(), p1.getY() - p2.getY());
     }

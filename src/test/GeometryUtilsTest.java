@@ -4,7 +4,7 @@ import org.junit.Test;
 /**
  * Created by SHaaD on 15.11.2016.
  */
-public class GeometryUtilTest {
+public class GeometryUtilsTest {
     @Test
     public void areCollidesEqual() throws Exception {
         double x1 = 1, y1 = 1, r1 = 1;
