@@ -25,10 +25,11 @@ public final class MyStrategy implements Strategy {
                     laneType = LaneType.BOTTOM;
                     break;
             }
+            State.setLaneType(laneType);
 
             LanePointsHolder lanePointsHolder = new LanePointsHolder(game.getMapSize());
-            behaviours.add(new MovementModule(laneType, lanePointsHolder));
-            behaviours.add(new AttackModule(laneType, lanePointsHolder));
+            behaviours.add(new MovementModule(lanePointsHolder));
+            behaviours.add(new AttackModule(lanePointsHolder));
             isInit = true;
         }
         behaviours.forEach(x -> x.updateMove(self, world, game, move));

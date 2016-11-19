@@ -8,17 +8,15 @@ import java.util.stream.Stream;
 import static java.lang.Math.PI;
 
 public class AttackModule implements BehaviourModule {
-    private final LaneType laneType;
     private final LanePointsHolder lanePointsHolder;
 
-    public AttackModule(LaneType laneType, LanePointsHolder lanePointsHolder) {
-        this.laneType = laneType;
+    public AttackModule(LanePointsHolder lanePointsHolder) {
         this.lanePointsHolder = lanePointsHolder;
     }
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-        if (State.getBehaviour() == State.BehaviourType.ESCAPING || State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE) {
+        if (State.getBehaviour() == State.BehaviourType.ESCAPING/* || State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE*/) {
             return;
         }
 
@@ -28,31 +26,25 @@ public class AttackModule implements BehaviourModule {
                 .filter(x -> x.getFaction() != self.getFaction())
                 .filter(x -> getDistanceToMe(self, x) <= self.getCastRange())
                 .min((o1, o2) -> {
-                    int compareResult = getDistanceToMe(self, o1).compareTo(getDistanceToMe(self, o2));
-                    boolean firstIsOneShot = o1.getLife() <= game.getMagicMissileDirectDamage();
-                    boolean secondIsOneShot = o2.getLife() <= game.getMagicMissileDirectDamage();
+                    int compareDistanceResult = getDistanceToMe(self, o1).compareTo(getDistanceToMe(self, o2));
+                    int compareHPResult = Double.compare(o1.getLife() * 1.0 / o1.getMaxLife(), o2.getLife() * 1.0 / o2.getMaxLife());
 
-                    if (firstIsOneShot && secondIsOneShot) {
-                        return compareResult;
-                    } else if (firstIsOneShot) {
-                        return -1;
-                    } else if (secondIsOneShot) {
-                        return 1;
-                    }
+                    if (compareHPResult != 0)
+                        return compareHPResult;
 
-                    return compareResult;
+                    return compareDistanceResult;
                 });
         min.ifPresent(x -> {
             long wizardCount = Arrays.stream(world.getWizards())
                     .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange() * 1.5)
                     .filter(wizard -> wizard.getFaction() != self.getFaction())
                     .count();
-            if (self.getDistanceTo(x) <= self.getCastRange() * 0.7 || wizardCount >= 2) {
+            if (self.getDistanceTo(x) <= self.getCastRange() * 0.8 || wizardCount >= 2) {
                 move.setSpeed(-game.getWizardForwardSpeed());
 
                 int currentPointIndex = getPreviousPointIndex();
 
-                ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(laneType);
+                ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
                 Point previousPoint = controlPointsForLane.get(currentPointIndex);
                 checkIfCurrentPointIsPassed(self, previousPoint);
                 setStrafeSpeed(self, previousPoint, game, move);

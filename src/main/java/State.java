@@ -1,3 +1,5 @@
+import model.LaneType;
+
 /**
  * Created by SHaaD on 13.11.2016.
  */
@@ -8,6 +10,8 @@ class State {
     private static int currentPointIndex = 0;
 
     private static int lastRuneIndex = 0;
+
+    private static LaneType laneType;
 
     static BehaviourType getBehaviour() {
         return behaviour;
@@ -41,6 +45,13 @@ class State {
         lastRuneIndex++;
     }
 
+    static LaneType getLaneType() {
+        return laneType;
+    }
+
+    static void setLaneType(LaneType laneType) {
+        State.laneType = laneType;
+    }
 
     enum BehaviourType {
         NONE,

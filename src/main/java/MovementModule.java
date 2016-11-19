@@ -8,11 +8,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 class MovementModule implements BehaviourModule {
-    private final LaneType laneType;
     private final LanePointsHolder lanePointsHolder;
 
-    MovementModule(LaneType laneType, LanePointsHolder lanePointsHolder) {
-        this.laneType = laneType;
+    MovementModule(LanePointsHolder lanePointsHolder) {
         this.lanePointsHolder = lanePointsHolder;
     }
 
@@ -22,8 +20,11 @@ class MovementModule implements BehaviourModule {
             State.setBehaviour(State.BehaviourType.DEAD);
             return;
         }
+        if (shouldWaitCreeps(self, world)) {
+            return;
+        }
 
-        ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(laneType);
+        ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
 
         updateRuneStatus(world, game);
         handleRuneBehaviour(self, world, game);
@@ -42,16 +43,18 @@ class MovementModule implements BehaviourModule {
 
         double distanceToPoint = self.getDistanceTo(currentPoint.getX(), currentPoint.getY());
         if (distanceToPoint <= Constants.POINT_RADIUS && State.getBehaviour() != State.BehaviourType.ESCAPING) {
-            State.increaseCurrentPointIndex();
+            if (State.getCurrentPointIndex() + 1 < controlPointsForLane.size()) {
+                State.increaseCurrentPointIndex();
+            }
             currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
         }
 
         move.setSpeed(game.getWizardForwardSpeed());
-        if (State.getBehaviour() != State.BehaviourType.GOING_FOR_RUNE) {
-            move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
-        } else {
+        if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE && State.getBehaviour() != State.BehaviourType.ESCAPING) {
             Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
             move.setTurn(self.getAngleTo(nearestRune.getX(), nearestRune.getY()));
+        } else {
+            move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
         }
 
         checkCollisions(self, world, game, move);
@@ -170,12 +173,12 @@ class MovementModule implements BehaviourModule {
             return false;
         }
         double lifeRemaining = self.getLife() * 1.0 / self.getMaxLife();
-        if (lifeRemaining >= 0.5) {
+        if (lifeRemaining >= Constants.HP_TO_ESCAPE) {
             return false;
         }
         boolean buildingThreatExists = Arrays.stream(world.getBuildings())
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 50)
+                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 200)
                 .findAny().isPresent();
         if (buildingThreatExists) {
             return true;
@@ -183,7 +186,7 @@ class MovementModule implements BehaviourModule {
 
         boolean wizardThreatExists = Arrays.stream(world.getWizards())
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 50)
+                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 200)
                 .findAny().isPresent();
         if (wizardThreatExists) {
             return true;
@@ -192,8 +195,8 @@ class MovementModule implements BehaviourModule {
         boolean minionThreatExists = Arrays.stream(world.getMinions())
                 .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0))
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> game.getDartRadius() <= self.getDistanceTo(x)
-                        || game.getOrcWoodcutterAttackRange() <= self.getDistanceTo(x))
+                .filter(x -> game.getDartRadius() + 30 >= self.getDistanceTo(x)
+                        || game.getOrcWoodcutterAttackRange() + 30 >= self.getDistanceTo(x))
                 .findFirst().isPresent();
 
         return minionThreatExists && lifeRemaining <= 0.3;
@@ -223,6 +226,12 @@ class MovementModule implements BehaviourModule {
 
     private int getTicksToReachRune(Wizard self, Game game, double distanceToNearestRune) {
         return (int) ((distanceToNearestRune - self.getRadius()) / game.getWizardForwardSpeed()) + 1;
+    }
+
+    private boolean shouldWaitCreeps(Wizard self, World world) {
+        Point stopPoint = lanePointsHolder.getStopPoint(State.getLaneType());
+        return self.getDistanceTo(stopPoint.getX(), stopPoint.getY()) <= 100
+                && world.getTickIndex() <= lanePointsHolder.getTicksWaiting(State.getLaneType());
     }
 
 }
