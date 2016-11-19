@@ -5,8 +5,8 @@ import java.util.ArrayList;
 /**
  * Created by SHaaD on 19.11.2016.
  */
-public class Utils {
-    public static Point getNearestRune(LanePointsHolder lanePointsHolder, Wizard self) {
+class Utils {
+    static Point getNearestRune(LanePointsHolder lanePointsHolder, Wizard self) {
         double distanceToTopRune = self.getDistanceTo(lanePointsHolder.getTopRune().getX(), lanePointsHolder.getTopRune().getY());
         double distanceToBottomRune = self.getDistanceTo(lanePointsHolder.getBottomRune().getX(), lanePointsHolder.getBottomRune().getY());
         Point nearestRune;
@@ -18,7 +18,7 @@ public class Utils {
         return nearestRune;
     }
 
-    public static int getNearestPoint(Wizard self, ArrayList<Point> points) {
+    static int getNearestPoint(Wizard self, ArrayList<Point> points) {
         int minIndex = 0;
         double minDistance = Double.MAX_VALUE;
         for (int i = 0; i < points.size(); i++) {

@@ -2,47 +2,47 @@
  * Created by SHaaD on 13.11.2016.
  */
 //todo: remove this singleton
-public class State {
+class State {
     private static BehaviourType behaviour = BehaviourType.MOVING;
 
-    private static int currentPointIndex;
+    private static int currentPointIndex = 0;
 
-    private static int lastRuneIndex;
+    private static int lastRuneIndex = 0;
 
-    public static BehaviourType getBehaviour() {
+    static BehaviourType getBehaviour() {
         return behaviour;
     }
 
-    public static void setBehaviour(BehaviourType behaviour) {
+    static void setBehaviour(BehaviourType behaviour) {
         State.behaviour = behaviour;
     }
 
-    public static int getCurrentPointIndex() {
+    static int getCurrentPointIndex() {
         return currentPointIndex;
     }
 
-    public static void setCurrentPointIndex(int currentPointIndex) {
+    static void setCurrentPointIndex(int currentPointIndex) {
         State.currentPointIndex = currentPointIndex;
     }
 
-    public static void reduceCurrentPointIndex() {
+    static void reduceCurrentPointIndex() {
         State.currentPointIndex--;
     }
 
-    public static void increaseCurrentPointIndex() {
+    static void increaseCurrentPointIndex() {
         State.currentPointIndex++;
     }
 
-    public static int getLastRuneIndex() {
+    static int getLastRuneIndex() {
         return lastRuneIndex;
     }
 
-    public static void increaseLastRuneIndex() {
+    static void increaseLastRuneIndex() {
         lastRuneIndex++;
     }
 
 
-    public enum BehaviourType {
+    enum BehaviourType {
         NONE,
         DEAD,
         MOVING,

@@ -4,13 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class LanePointsHolder {
+class LanePointsHolder {
     private final Map<LaneType, ArrayList<Point>> lane2PointListMap;
 
     private final Point topRune;
     private final Point bottomRune;
 
-    public LanePointsHolder(double mapSize) {
+    LanePointsHolder(double mapSize) {
         topRune = new Point(0.3 * mapSize, 0.3 * mapSize);
         bottomRune = new Point(0.7 * mapSize, 0.7 * mapSize);
 
@@ -80,15 +80,15 @@ public class LanePointsHolder {
         }});
     }
 
-    public ArrayList<Point> getControlPointsForLane(LaneType laneType) {
+    ArrayList<Point> getControlPointsForLane(LaneType laneType) {
         return lane2PointListMap.get(laneType);
     }
 
-    public Point getTopRune() {
+    Point getTopRune() {
         return topRune;
     }
 
-    public Point getBottomRune() {
+    Point getBottomRune() {
         return bottomRune;
     }
 }

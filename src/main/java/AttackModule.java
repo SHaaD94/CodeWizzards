@@ -52,8 +52,10 @@ public class AttackModule implements BehaviourModule {
 
                 int currentPointIndex = getPreviousPointIndex();
 
-                checkIfCurrentPointIsPassed(self, currentPointIndex);
-                setStrafeSpeed(self, currentPointIndex, game, move);
+                ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(laneType);
+                Point previousPoint = controlPointsForLane.get(currentPointIndex);
+                checkIfCurrentPointIsPassed(self, previousPoint);
+                setStrafeSpeed(self, previousPoint, game, move);
             }
             AttackUtil.setAttackUnit(self, game, move, x);
 
@@ -69,22 +71,19 @@ public class AttackModule implements BehaviourModule {
         return currentPointIndex;
     }
 
-    private void checkIfCurrentPointIsPassed(Wizard self, int currentPointIndex) {
-        ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(laneType);
-        Point currentPoint = controlPointsForLane.get(currentPointIndex);
+    private void checkIfCurrentPointIsPassed(Wizard self, Point currentPoint) {
         double distanceToPoint = self.getDistanceTo(currentPoint.getX(), currentPoint.getY());
         if (distanceToPoint <= 20) {
             State.reduceCurrentPointIndex();
         }
     }
 
-    private void setStrafeSpeed(Wizard self, int currentPointIndex, Game game, Move move) {
-        Point point = lanePointsHolder.getControlPointsForLane(laneType).get(currentPointIndex);
+    private void setStrafeSpeed(Wizard self, Point previousControlPoint, Game game, Move move) {
         Point leftStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() - PI / 2, self.getX(), self.getY());
         Point rightStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() + PI / 2, self.getX(), self.getY());
 
-        double leftStrafeToPoint = GeometryUtil.getDistanceBetweenPoints(point, leftStrafeResult);
-        double rightStrafeToPoint = GeometryUtil.getDistanceBetweenPoints(point, rightStrafeResult);
+        double leftStrafeToPoint = GeometryUtil.getDistanceBetweenPoints(previousControlPoint, leftStrafeResult);
+        double rightStrafeToPoint = GeometryUtil.getDistanceBetweenPoints(previousControlPoint, rightStrafeResult);
         if (leftStrafeToPoint < rightStrafeToPoint) {
             move.setStrafeSpeed(-game.getWizardStrafeSpeed());
         } else {

@@ -7,24 +7,17 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class MovementModule implements BehaviourModule {
+class MovementModule implements BehaviourModule {
     private final LaneType laneType;
     private final LanePointsHolder lanePointsHolder;
 
-    private Wizard prevWizard;
-    private World prevWorld;
-    private Move prevMove;
-
-    private boolean isInitialized;
-
-    public MovementModule(LaneType laneType, LanePointsHolder lanePointsHolder) {
+    MovementModule(LaneType laneType, LanePointsHolder lanePointsHolder) {
         this.laneType = laneType;
         this.lanePointsHolder = lanePointsHolder;
     }
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-        init(self, world, move);
         if (self.getLife() == 0) {
             State.setBehaviour(State.BehaviourType.DEAD);
             return;
@@ -63,8 +56,6 @@ public class MovementModule implements BehaviourModule {
 
         checkCollisions(self, world, game, move);
 
-        updateState(self, world, move);
-
         System.out.println(State.getBehaviour());
     }
 
@@ -76,8 +67,6 @@ public class MovementModule implements BehaviourModule {
 
             long bonusCount = Arrays.stream(world.getBonuses())
                     .filter(x -> self.getDistanceTo(x) <= Constants.RUNE_SCAN_DISTANCE).count();
-
-            int runeInterval = game.getBonusAppearanceIntervalTicks();
 
             boolean runePickedUpOrDoesntExist = distanceToNearestRune == 0 ||
                     (distanceToNearestRune <= self.getVisionRange() - 20 && bonusCount == 0);
@@ -215,14 +204,6 @@ public class MovementModule implements BehaviourModule {
         return State.getBehaviour() != State.BehaviourType.MOVING;
     }
 
-    private void init(Wizard self, World world, Move move) {
-        if (!isInitialized) {
-            updateState(self, world, move);
-            State.setCurrentPointIndex(0);
-        }
-
-        isInitialized = true;
-    }
 
     private boolean shouldGoForRune(Wizard self, World world, Game game) {
         Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
@@ -244,9 +225,4 @@ public class MovementModule implements BehaviourModule {
         return (int) ((distanceToNearestRune - self.getRadius()) / game.getWizardForwardSpeed()) + 1;
     }
 
-    private void updateState(Wizard self, World world, Move move) {
-        prevWizard = self;
-        prevWorld = world;
-        prevMove = move;
-    }
 }
