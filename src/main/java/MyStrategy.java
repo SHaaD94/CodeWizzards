@@ -28,6 +28,7 @@ public final class MyStrategy implements Strategy {
             State.setLaneType(laneType);
 
             LanePointsHolder lanePointsHolder = new LanePointsHolder(game.getMapSize());
+            behaviours.add(new RuneModule(lanePointsHolder));
             behaviours.add(new MovementModule(lanePointsHolder));
             behaviours.add(new AttackModule(lanePointsHolder));
             isInit = true;
