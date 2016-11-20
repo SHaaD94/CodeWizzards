@@ -83,9 +83,9 @@ class LanePointsHolder {
         };
 
         lane2StopPoints = new EnumMap<LaneType, Point>(LaneType.class) {{
-            put(LaneType.TOP, new Point(0.05 * mapSize, 0.2 * mapSize));
+            put(LaneType.TOP, new Point(0.05 * mapSize, 0.4 * mapSize));
             put(LaneType.MIDDLE, new Point(0.35 * mapSize, 0.65 * mapSize));
-            put(LaneType.BOTTOM, new Point(0.8 * mapSize, 0.95 * mapSize));
+            put(LaneType.BOTTOM, new Point(0.6 * mapSize, 0.95 * mapSize));
         }};
 
         lane2TicksWaiting = new EnumMap<LaneType, Integer>(LaneType.class) {{

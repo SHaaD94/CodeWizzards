@@ -29,8 +29,12 @@ class State {
         State.currentPointIndex = currentPointIndex;
     }
 
+    static void reduceCurrentPointIndex(int reduceCount) {
+        State.currentPointIndex -= reduceCount;
+    }
+
     static void reduceCurrentPointIndex() {
-        State.currentPointIndex--;
+        State.reduceCurrentPointIndex(1);
     }
 
     static void increaseCurrentPointIndex() {

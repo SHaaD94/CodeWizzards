@@ -39,13 +39,19 @@ public class AttackModule implements BehaviourModule {
                     .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange() * 1.5)
                     .filter(wizard -> wizard.getFaction() != self.getFaction())
                     .count();
-            if (self.getDistanceTo(x) <= self.getCastRange() * 0.8 || wizardCount >= 2) {
+            if (self.getDistanceTo(x) <= self.getCastRange() * 0.8 || wizardCount >= 2
+                    || State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE) {
                 move.setSpeed(-game.getWizardForwardSpeed());
 
                 int currentPointIndex = getPreviousPointIndex();
 
-                ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
-                Point previousPoint = controlPointsForLane.get(currentPointIndex);
+                Point previousPoint;
+                if (State.getBehaviour() != State.BehaviourType.GOING_FOR_RUNE) {
+                    ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
+                    previousPoint = controlPointsForLane.get(currentPointIndex);
+                } else {
+                    previousPoint = Utils.getNearestRune(lanePointsHolder, self);
+                }
                 checkIfCurrentPointIsPassed(self, previousPoint);
                 setStrafeSpeed(self, previousPoint, game, move);
             }

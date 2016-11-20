@@ -26,7 +26,6 @@ class MovementModule implements BehaviourModule {
 
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
 
-        updateRuneStatus(world, game);
         handleRuneBehaviour(self, world, game);
 
         if (isStateNotMoving() && State.getBehaviour() != State.BehaviourType.GOING_FOR_RUNE) {
@@ -36,7 +35,7 @@ class MovementModule implements BehaviourModule {
 
         Point currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
         if (shouldEscape(self, world, game, controlPointsForLane)) {
-            State.reduceCurrentPointIndex();
+            State.setCurrentPointIndex(Utils.getNearestPoint(self, controlPointsForLane) - 1);
             currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
             State.setBehaviour(State.BehaviourType.ESCAPING);
         }
@@ -80,13 +79,6 @@ class MovementModule implements BehaviourModule {
             } else {
                 State.setBehaviour(State.BehaviourType.GOING_FOR_RUNE);
             }
-        }
-    }
-
-    private void updateRuneStatus(World world, Game game) {
-        if (State.getLastRuneIndex() / game.getBonusAppearanceIntervalTicks()
-                < world.getTickIndex() / game.getBonusAppearanceIntervalTicks()) {
-            //todo: update rune check index here
         }
     }
 
