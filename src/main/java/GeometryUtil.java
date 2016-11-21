@@ -34,4 +34,12 @@ class GeometryUtil {
     static double getDistanceBetweenPoints(Point p1, Point p2) {
         return hypot(p1.getX() - p2.getX(), p1.getY() - p2.getY());
     }
+
+    static double getDistanceBetweenPoints(Point p1, CircularUnit p2) {
+        return hypot(p1.getX() - p2.getX(), p1.getY() - p2.getY());
+    }
+
+    static double getDistanceBetweenPoints(CircularUnit p1, CircularUnit p2) {
+        return hypot(p1.getX() - p2.getX(), p1.getY() - p2.getY());
+    }
 }

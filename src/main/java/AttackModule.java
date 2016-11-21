@@ -16,7 +16,7 @@ public class AttackModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-        if (State.getBehaviour() == State.BehaviourType.ESCAPING/* || State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE*/) {
+        if (State.getBehaviour() == State.BehaviourType.ESCAPING) {
             return;
         }
 
