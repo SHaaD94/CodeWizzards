@@ -145,7 +145,7 @@ class MovementModule implements BehaviourModule {
         if (!escapeAvailable) {
             return false;
         }
-        double lifeRemaining = self.getLife() * 1.0 / self.getMaxLife();
+        double lifeRemaining = getLifeAfterMaxDamage(self, world, game) * 1.0 / self.getMaxLife();
         if (lifeRemaining >= Constants.HP_TO_ESCAPE) {
             return false;
         }
@@ -174,5 +174,42 @@ class MovementModule implements BehaviourModule {
 
         return minionThreatExists && lifeRemaining <= 0.3;
 
+    }
+
+    private int getLifeAfterMaxDamage(Wizard self, World world, Game game) {
+        int currentLife = self.getLife();
+        List<Minion> minions = Arrays.stream(world.getMinions())
+                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> x.getRemainingActionCooldownTicks() <= 15)
+                .filter(x -> game.getDartRadius() + 15 >= self.getDistanceTo(x) || game.getOrcWoodcutterAttackRange() + 5 >= self.getDistanceTo(x))
+                .collect(Collectors.toList());
+        List<Building> buildings = Arrays.stream(world.getBuildings())
+                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 50)
+                .filter(x -> x.getRemainingActionCooldownTicks() <= 50)
+                .collect(Collectors.toList());
+
+        List<Wizard> wizards = Arrays.stream(world.getWizards())
+                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 10)
+                //FIXME: support multiple attack types later
+                .filter(x -> x.getRemainingCooldownTicksByAction()[2] <= 15)
+                .collect(Collectors.toList());
+        for (Minion minion : minions) {
+            minion.getDamage();
+        }
+        for (Building building : buildings) {
+            currentLife -= building.getDamage();
+        }
+        for (Wizard wizard : wizards) {
+            Status[] statuses = wizard.getStatuses();
+            boolean hasEmpower = Arrays.stream(statuses).anyMatch(x -> x.getType() == StatusType.EMPOWERED);
+            double resultDamage = game.getMagicMissileDirectDamage();
+            if (hasEmpower) {
+                resultDamage = game.getEmpoweredDamageFactor();
+            }
+            currentLife -= resultDamage;
+        }
+        return currentLife;
     }
 }
