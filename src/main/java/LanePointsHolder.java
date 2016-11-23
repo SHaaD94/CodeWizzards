@@ -7,6 +7,7 @@ import java.util.Map;
 
 class LanePointsHolder {
     private final Map<LaneType, ArrayList<Point>> lane2PointListMap;
+    private final Map<LaneType, Point> lane2CreepSpawnPoint;
     private final List<Point> runeAttractionPoints;
 
     private final Point topRune;
@@ -119,10 +120,20 @@ class LanePointsHolder {
                 add(new Point(0.93 * mapSize, 0.93 * mapSize));
             }
         };
+
+        lane2CreepSpawnPoint = new EnumMap<LaneType, Point>(LaneType.class) {{
+            put(LaneType.TOP, new Point(0.95 * mapSize, 0.3 * mapSize));
+            put(LaneType.MIDDLE, new Point(0.8 * mapSize, 0.2 * mapSize));
+            put(LaneType.BOTTOM, new Point(0.7 * mapSize, 0.05 * mapSize));
+        }};
     }
 
     ArrayList<Point> getControlPointsForLane(LaneType laneType) {
         return lane2PointListMap.get(laneType);
+    }
+
+    Point getCreepSpawnPoint(LaneType laneType) {
+        return lane2CreepSpawnPoint.get(laneType);
     }
 
     public List<Point> getRuneAttractionPoints() {

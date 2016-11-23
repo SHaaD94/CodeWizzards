@@ -139,6 +139,10 @@ class MovementModule implements BehaviourModule {
 
     private boolean shouldEscape(Wizard self, World world, Game game, ArrayList<Point> controlPointsForLane) {
         boolean escapeAvailable = State.getCurrentPointIndex() > 0 && State.getCurrentPointIndex() < controlPointsForLane.size();
+        if (shouldRunFromSpawnPoint(self, world, game)) {
+            System.out.println("RUN FOREST RUN");
+            return true;
+        }
         if (!escapeAvailable) {
             return false;
         }
@@ -171,6 +175,12 @@ class MovementModule implements BehaviourModule {
 
         return minionThreatExists && lifeRemaining <= 0.3;
 
+    }
+
+    private boolean shouldRunFromSpawnPoint(Wizard self, World world, Game game) {
+        Point creepSpawnPoint = lanePointsHolder.getCreepSpawnPoint(State.getLaneType());
+        return (self.getDistanceTo(creepSpawnPoint.getX(), creepSpawnPoint.getX()) <= 500)
+                && world.getTickIndex() % game.getFactionMinionAppearanceIntervalTicks() < 100;
     }
 
     private int getLifeAfterMaxDamage(Wizard self, World world, Game game) {

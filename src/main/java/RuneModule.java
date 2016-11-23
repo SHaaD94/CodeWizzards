@@ -67,9 +67,11 @@ class RuneModule implements BehaviourModule {
         Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
         double distanceToNearestRune = self.getDistanceTo(nearestRune.getX(), nearestRune.getY());
 
-        Point nearestAttractionPoint = Utils.getNearestControlPoint(self, lanePointsHolder.getRuneAttractionPoints());
-        double distanceToNearestRuneAttractionPoint = self.getDistanceTo(nearestAttractionPoint.getX(), nearestRune.getY());
-        if (distanceToNearestRuneAttractionPoint > Constants.RUNE_ATTRACT_RADIUS) {
+        boolean nearAttractionPoint = lanePointsHolder.getRuneAttractionPoints()
+                .stream()
+                .anyMatch(x -> self.getDistanceTo(x.getX(), x.getY()) <= Constants.RUNE_ATTRACT_RADIUS);
+
+        if (!nearAttractionPoint) {
             return false;
         }
 

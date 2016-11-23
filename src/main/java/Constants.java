@@ -8,7 +8,7 @@ class Constants {
 
     final static int POINT_SAFE_RANGE = 700;
 
-    final static int RUNE_ATTRACT_RADIUS = 700;
+    final static int RUNE_ATTRACT_RADIUS = 500;
     final static int RUNE_SCAN_DISTANCE = 900;
 
     final static double HP_TO_ESCAPE = 0.5;
