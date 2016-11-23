@@ -79,12 +79,12 @@ class MovementModule implements BehaviourModule {
             return;
         }
 
-        int iterationCountRight = getIterationCount(self, world, game, move, unitsInVisionRange, game.getWizardMaxTurnAngle());
+        int iterationCountRight = getIterationCount(self, world, unitsInVisionRange, game.getWizardMaxTurnAngle());
         if (iterationCountRight == 0) {
             return;
         }
 
-        int iterationCountLeft = getIterationCount(self, world, game, move, unitsInVisionRange, -game.getWizardMaxTurnAngle());
+        int iterationCountLeft = getIterationCount(self, world, unitsInVisionRange, -game.getWizardMaxTurnAngle());
 
         if (iterationCountLeft <= iterationCountRight) {
             move.setTurn(-game.getWizardMaxTurnAngle());
@@ -104,7 +104,7 @@ class MovementModule implements BehaviourModule {
     }
 
 
-    private int getIterationCount(Wizard self, World world, Game game, Move move, List<CircularUnit> unitsInVisionRange, double rotateAngle) {
+    private int getIterationCount(Wizard self, World world, List<CircularUnit> unitsInVisionRange, double rotateAngle) {
         int iterationCount = 0;
         double currentAngle = self.getAngle();
         double currentX = self.getX();
@@ -126,9 +126,6 @@ class MovementModule implements BehaviourModule {
                 iterationCount++;
                 hasCollisions = true;
             }
-        }
-        if (iterationCount != 0) {
-            move.setTurn(game.getWizardMaxTurnAngle());
         }
         return iterationCount;
     }

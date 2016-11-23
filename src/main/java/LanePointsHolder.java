@@ -84,8 +84,13 @@ class LanePointsHolder {
 
         runeAttractionPoints = new ArrayList<Point>() {
             {
+                add(new Point(0.05 * mapSize, 0.05 * mapSize));
                 add(new Point(0.15 * mapSize, 0.15 * mapSize));
                 add(new Point(0.15 * mapSize, 0.05 * mapSize));
+                add(new Point(0.25 * mapSize, 0.05 * mapSize));
+                add(new Point(0.35 * mapSize, 0.05 * mapSize));
+                add(new Point(0.05 * mapSize, 0.15 * mapSize));
+                add(new Point(0.05 * mapSize, 0.25 * mapSize));
 
                 add(new Point(0.1 * mapSize, 0.1 * mapSize));
                 add(new Point(0.2 * mapSize, 0.1 * mapSize));
@@ -101,9 +106,17 @@ class LanePointsHolder {
                 add(new Point(0.7 * mapSize, 0.7 * mapSize));
                 add(new Point(0.8 * mapSize, 0.8 * mapSize));
                 add(new Point(0.9 * mapSize, 0.9 * mapSize));
+                add(new Point(0.65 * mapSize, 0.95 * mapSize));
+                add(new Point(0.75 * mapSize, 0.95 * mapSize));
                 add(new Point(0.85 * mapSize, 0.95 * mapSize));
                 add(new Point(0.95 * mapSize, 0.85 * mapSize));
-                add(new Point(0.99 * mapSize, 0.99 * mapSize));
+
+                add(new Point(0.95 * mapSize, 0.65 * mapSize));
+                add(new Point(0.95 * mapSize, 0.75 * mapSize));
+                add(new Point(0.95 * mapSize, 0.85 * mapSize));
+
+                add(new Point(0.95 * mapSize, 0.95 * mapSize));
+                add(new Point(0.93 * mapSize, 0.93 * mapSize));
             }
         };
     }
