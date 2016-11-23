@@ -26,17 +26,19 @@ class RuneModule implements BehaviourModule {
             long bonusCount = Arrays.stream(world.getBonuses())
                     .filter(x -> self.getDistanceTo(x) <= Constants.RUNE_SCAN_DISTANCE).count();
 
-/*
-//todo: improve this
-            boolean noBonusInVision = distanceToNearestRune <= self.getVisionRange() - 20 && bonusCount == 0;
-            boolean runeMayAppear = runeMayAppearAfterReaching(self, world, game, distanceToNearestRune);
-            boolean runeCanExist = runeMayExistRightNow(self, world, game);
-
+            //please don't simplify this if, it's too gross
             boolean runePickedUpOrDoesntExist;
-            runePickedUpOrDoesntExist = bonusCount == 0 && (distanceToNearestRune == 0 || !((noBonusInVision && !runeCanExist) || (!noBonusInVision && runeCanExist) || runeMayAppear));
-*/
-            boolean runePickedUpOrDoesntExist = distanceToNearestRune == 0 ||
-                    (distanceToNearestRune <= self.getVisionRange() - 20 && bonusCount == 0);
+            if (distanceToNearestRune <= self.getRadius()) {
+                runePickedUpOrDoesntExist = true;
+            } else if (distanceToNearestRune <= self.getVisionRange() && bonusCount != 0) {
+                runePickedUpOrDoesntExist = false;
+            } else if (runeMayExistRightNow(world, game)) {
+                runePickedUpOrDoesntExist = false;
+            } else if (runeMayAppearAfterReaching(self, world, game, distanceToNearestRune)) {
+                runePickedUpOrDoesntExist = false;
+            } else {
+                runePickedUpOrDoesntExist = true;
+            }
 
             if (runePickedUpOrDoesntExist) {
                 State.setBehaviour(State.BehaviourType.NONE);
@@ -45,9 +47,10 @@ class RuneModule implements BehaviourModule {
                 State.setBehaviour(State.BehaviourType.GOING_FOR_RUNE);
             }
         }
+
     }
 
-    private boolean runeMayExistRightNow(Wizard self, World world, Game game) {
+    private boolean runeMayExistRightNow(World world, Game game) {
         return world.getTickIndex() / game.getBonusAppearanceIntervalTicks() > State.getLastRuneIndex();
     }
 

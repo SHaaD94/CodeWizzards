@@ -27,7 +27,7 @@ public class AttackModule implements BehaviourModule {
                 .filter(x -> getDistanceToMe(self, x) <= self.getCastRange())
                 .min((o1, o2) -> {
                     int compareDistanceResult = getDistanceToMe(self, o1).compareTo(getDistanceToMe(self, o2));
-                    int compareHPResult = Double.compare(o1.getLife() * 1.0 / o1.getMaxLife(), o2.getLife() * 1.0 / o2.getMaxLife());
+                    int compareHPResult = Integer.compare(o1.getMaxLife() - o1.getLife(), o2.getMaxLife() - o2.getLife());
 
                     if (compareHPResult != 0)
                         return compareHPResult;

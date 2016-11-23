@@ -159,7 +159,7 @@ class MovementModule implements BehaviourModule {
 
         boolean wizardThreatExists = Arrays.stream(world.getWizards())
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 300)
+                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 100)
                 .findAny().isPresent();
         if (wizardThreatExists) {
             return true;
@@ -181,17 +181,18 @@ class MovementModule implements BehaviourModule {
         List<Minion> minions = Arrays.stream(world.getMinions())
                 .filter(x -> x.getFaction() != self.getFaction())
                 .filter(x -> x.getRemainingActionCooldownTicks() <= 15)
-                .filter(x -> game.getDartRadius() + 15 >= self.getDistanceTo(x) || game.getOrcWoodcutterAttackRange() + 5 >= self.getDistanceTo(x))
+                .filter(x -> game.getDartRadius() + 15 >= self.getDistanceTo(x) - self.getRadius()
+                        || game.getOrcWoodcutterAttackRange() + 5 >= self.getDistanceTo(x) - self.getRadius())
                 .collect(Collectors.toList());
         List<Building> buildings = Arrays.stream(world.getBuildings())
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 50)
+                .filter(x -> self.getDistanceTo(x) - self.getRadius() <= x.getAttackRange() + 50)
                 .filter(x -> x.getRemainingActionCooldownTicks() <= 50)
                 .collect(Collectors.toList());
 
         List<Wizard> wizards = Arrays.stream(world.getWizards())
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 10)
+                .filter(x -> self.getDistanceTo(x) - self.getRadius() <= x.getCastRange() + 10)
                 //FIXME: support multiple attack types later
                 .filter(x -> x.getRemainingCooldownTicksByAction()[2] <= 15)
                 .collect(Collectors.toList());
