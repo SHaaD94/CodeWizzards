@@ -23,13 +23,15 @@ class MovementModule implements BehaviourModule {
 
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
 
-        if (State.getBehaviour() == State.BehaviourType.NONE) {
-            State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
-            State.setBehaviour(State.BehaviourType.MOVING);
-        } else if (State.getBehaviour() != State.BehaviourType.MOVING
-                && State.getBehaviour() != State.BehaviourType.GOING_FOR_RUNE) {
-            State.setCurrentPointIndex(Utils.getNearestControlPointIndex(self, controlPointsForLane));
-            State.setBehaviour(State.BehaviourType.MOVING);
+        if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
+            if (State.getBehaviour() == State.BehaviourType.NONE) {
+                State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
+                State.setBehaviour(State.BehaviourType.MOVING);
+            } else if (State.getBehaviour() != State.BehaviourType.MOVING
+                    && State.getBehaviour() != State.BehaviourType.GOING_FOR_RUNE) {
+                State.setCurrentPointIndex(Utils.getNearestControlPointIndex(self, controlPointsForLane));
+                State.setBehaviour(State.BehaviourType.MOVING);
+            }
         }
 
         Point currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
@@ -68,7 +70,12 @@ class MovementModule implements BehaviourModule {
                 double moveAngle = self.getAngle();//moveSpeed < 0 ? self.getAngle() + PI : self.getAngle();
 
                 Point afterMovingByX = GeometryUtil.getNextIterationPosition(moveSpeed, moveAngle, self.getX(), self.getY());
-                double strafeAngle = self.getAngle() + 3 * (self.getAngle() <= 0 ? -PI : PI) / 2; //3PI/2
+                double strafeAngle;
+                if (self.getAngle() <= 0) {
+                    strafeAngle = self.getAngle() + 3 * (self.getAngle() <= 0 ? -PI : PI) / 2; //3PI/2
+                } else {
+                    strafeAngle = self.getAngle() + (self.getAngle() <= 0 ? -PI : PI) / 2; //3PI/2
+                }
 
                 positionAfterMoving = GeometryUtil.getNextIterationPosition(strafeSpeed, strafeAngle, afterMovingByX.getX(), afterMovingByX.getY());
                 double distanceBetweenPoints = GeometryUtil.getDistanceBetweenPoints(positionAfterMoving, pointToMove);
@@ -86,13 +93,12 @@ class MovementModule implements BehaviourModule {
 
         final Point finalPosition = positionAfterMoving;
         Optional<Tree> collidedTree = Arrays.stream(world.getTrees())
-                .filter(x -> GeometryUtil.areCollides(finalPosition.getX(), finalPosition.getY(), self.getRadius() + 5,
+                .filter(x -> GeometryUtil.areCollides(finalPosition.getX(), finalPosition.getY(), self.getRadius() + 10,
                         x.getX(), x.getY(), x.getRadius()))
                 .findFirst();
         if (collidedTree.isPresent()) {
             Tree tree = collidedTree.get();
             AttackUtil.setAttackUnit(self, game, move, tree);
-            return;
         }
         move.setSpeed(bestMoveSpeed);
         move.setStrafeSpeed(bestStrafeSpeed);

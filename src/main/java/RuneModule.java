@@ -30,14 +30,17 @@ class RuneModule implements BehaviourModule {
             boolean runePickedUpOrDoesntExist;
             if (distanceToNearestRune <= self.getRadius()) {
                 runePickedUpOrDoesntExist = true;
+/*
             } else if (distanceToNearestRune <= self.getVisionRange() && bonusCount != 0) {
                 runePickedUpOrDoesntExist = false;
             } else if (runeMayExistRightNow(world, game)) {
                 runePickedUpOrDoesntExist = false;
             } else if (runeMayAppearAfterReaching(self, world, game, distanceToNearestRune)) {
                 runePickedUpOrDoesntExist = false;
+*/
             } else {
-                runePickedUpOrDoesntExist = true;
+//                runePickedUpOrDoesntExist = true;
+                runePickedUpOrDoesntExist = false;
             }
 
             if (runePickedUpOrDoesntExist) {

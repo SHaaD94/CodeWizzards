@@ -18,11 +18,21 @@ public class EscapeModule implements BehaviourModule {
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
-        Point currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
-        if (shouldEscape(self, world, game, controlPointsForLane)) {
+
+        List<Wizard> wizards = Arrays.stream(world.getWizards())
+                .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange())
+                .filter(wizard -> wizard.getFaction() != self.getFaction()).collect(Collectors.toList());
+
+        if (shouldEscape(self, world, game, controlPointsForLane)
+                || wizards.size() >= 2
+                || isMinionThreatExists(self, world, game)) {
             State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
-            currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
             State.setBehaviour(State.BehaviourType.ESCAPING);
+        } else {
+            if (State.getBehaviour() == State.BehaviourType.ESCAPING && controlPointsForLane.size() > State.getCurrentPointIndex() + 1) {
+                State.increaseCurrentPointIndex();
+            }
+            State.setBehaviour(State.BehaviourType.MOVING);
         }
 
     }
@@ -52,15 +62,19 @@ public class EscapeModule implements BehaviourModule {
             return true;
         }
 
-        boolean minionThreatExists = Arrays.stream(world.getMinions())
+        boolean minionThreatExists = isMinionThreatExists(self, world, game);
+
+        return minionThreatExists && lifeRemaining <= 0.3;
+
+    }
+
+    private boolean isMinionThreatExists(Wizard self, World world, Game game) {
+        return Arrays.stream(world.getMinions())
                 .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0))
                 .filter(x -> x.getFaction() != self.getFaction())
                 .filter(x -> game.getDartRadius() + self.getRadius() >= self.getDistanceTo(x) + self.getRadius()
                         || game.getOrcWoodcutterAttackRange() + 30 >= self.getDistanceTo(x))
                 .findFirst().isPresent();
-
-        return minionThreatExists && lifeRemaining <= 0.3;
-
     }
 
     private int getLifeAfterMaxDamage(Wizard self, World world, Game game) {

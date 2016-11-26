@@ -20,10 +20,6 @@ public class AttackModule implements BehaviourModule {
         Optional<LivingUnit> min = getUnitToAttack(self.getCastRange(), self, world);
         if (min.isPresent()) {
             LivingUnit x = min.get();
-            List<Wizard> wizards = Arrays.stream(world.getWizards())
-                    .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange() * 1.5)
-                    .filter(wizard -> wizard.getFaction() != self.getFaction()).collect(Collectors.toList());
-
 
             AttackUtil.setAttackUnit(self, game, move, x);
 
@@ -44,7 +40,7 @@ public class AttackModule implements BehaviourModule {
 
         return units
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> getDistanceToMe(self, x) <= scanDistance)
+                .filter(x -> getDistanceToMe(self, x) <= scanDistance + x.getRadius())
                 .min((o1, o2) -> {
                     int compareDistanceResult = getDistanceToMe(self, o1).compareTo(getDistanceToMe(self, o2));
                     int compareHPResult = Double.compare(o1.getLife() * 1.0 / o1.getMaxLife(), o2.getLife() * 1.0 / o2.getMaxLife());
