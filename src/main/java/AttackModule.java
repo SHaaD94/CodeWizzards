@@ -1,6 +1,5 @@
 import model.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -25,25 +24,7 @@ public class AttackModule implements BehaviourModule {
                     .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange() * 1.5)
                     .filter(wizard -> wizard.getFaction() != self.getFaction()).collect(Collectors.toList());
 
-            boolean shouldFightForRune = shouldFightForRune(self, game, x, wizards);
-            if (State.getBehaviour() == State.BehaviourType.ESCAPING && !shouldFightForRune) {
-                return;
-            }
 
-            if ((self.getDistanceTo(x) <= self.getCastRange() * 0.8 || wizards.size() >= 2
-                    || State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE)
-                    && !shouldFightForRune) {
-                //move.setSpeed(-game.getWizardForwardSpeed());
-
-                int currentPointIndex = getPreviousPointIndex();
-
-                Point previousPoint;
-                ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
-                previousPoint = controlPointsForLane.get(currentPointIndex);
-
-                //checkIfCurrentPointIsPassed(self, previousPoint);
-                //setStrafeSpeed(self, previousPoint, game, move);
-            }
             AttackUtil.setAttackUnit(self, game, move, x);
 
             State.setBehaviour(State.BehaviourType.FIGHTING);
@@ -55,33 +36,6 @@ public class AttackModule implements BehaviourModule {
                     move.setSpeed(0);
                 }
             }
-        }
-    }
-
-    private boolean shouldFightForRune(Wizard self, Game game, LivingUnit x, List<Wizard> wizards) {
-        return State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE
-                && wizards.size() == 1
-                && x == wizards.get(0)
-                && ((wizards.get(0).getLife() + game.getMagicMissileDirectDamage()) <= self.getLife());
-    }
-
-    //todo work on dat shit
-    private void smartMoveToPoint(Wizard self, Move move, Game game) {
-        Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
-        double angleToRune = self.getAngleTo(nearestRune.getX(), nearestRune.getY());
-        move.setTurn(angleToRune);
-        if (Math.abs(angleToRune) >= 0 && Math.abs(angleToRune) < PI / 2) {
-            move.setStrafeSpeed(-game.getWizardStrafeSpeed());
-            move.setStrafeSpeed(game.getWizardForwardSpeed());
-        } else if (Math.abs(angleToRune) >= PI / 2 && Math.abs(angleToRune) < PI) {
-            move.setStrafeSpeed(-game.getWizardStrafeSpeed());
-            move.setStrafeSpeed(game.getWizardBackwardSpeed());
-        } else if (Math.abs(angleToRune) >= PI && Math.abs(angleToRune) < 3 * PI / 4) {
-            move.setStrafeSpeed(game.getWizardStrafeSpeed());
-            move.setStrafeSpeed(game.getWizardBackwardSpeed());
-        } else {
-            move.setStrafeSpeed(game.getWizardStrafeSpeed());
-            move.setStrafeSpeed(game.getWizardForwardSpeed());
         }
     }
 
@@ -100,34 +54,6 @@ public class AttackModule implements BehaviourModule {
 
                     return compareDistanceResult;
                 });
-    }
-
-    private int getPreviousPointIndex() {
-        int currentPointIndex = State.getCurrentPointIndex();
-        if (currentPointIndex > 0) {
-            currentPointIndex--;
-        }
-        return currentPointIndex;
-    }
-
-    private void checkIfCurrentPointIsPassed(Wizard self, Point currentPoint) {
-        double distanceToPoint = self.getDistanceTo(currentPoint.getX(), currentPoint.getY());
-        if (distanceToPoint <= 20) {
-            State.reduceCurrentPointIndex();
-        }
-    }
-
-    private void setStrafeSpeed(Wizard self, Point previousControlPoint, Game game, Move move) {
-        Point leftStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() - PI / 2, self.getX(), self.getY());
-        Point rightStrafeResult = GeometryUtil.getNextIterationPosition(self.getAngle() + PI / 2, self.getX(), self.getY());
-
-        double leftStrafeToPoint = GeometryUtil.getDistanceBetweenPoints(previousControlPoint, leftStrafeResult);
-        double rightStrafeToPoint = GeometryUtil.getDistanceBetweenPoints(previousControlPoint, rightStrafeResult);
-        if (leftStrafeToPoint < rightStrafeToPoint) {
-            move.setStrafeSpeed(-game.getWizardStrafeSpeed());
-        } else {
-            move.setStrafeSpeed(game.getWizardStrafeSpeed());
-        }
     }
 
     private Stream<LivingUnit> getLivingUnitStream(World world) {
