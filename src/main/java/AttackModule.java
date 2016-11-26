@@ -1,12 +1,8 @@
 import model.*;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static java.lang.Math.PI;
 
 public class AttackModule implements BehaviourModule {
     private final LanePointsHolder lanePointsHolder;
@@ -24,14 +20,6 @@ public class AttackModule implements BehaviourModule {
             AttackUtil.setAttackUnit(self, game, move, x);
 
             State.setBehaviour(State.BehaviourType.FIGHTING);
-        } else {
-            if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE && State.getBehaviour() != State.BehaviourType.ESCAPING) {
-                Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
-                double angleTo = self.getAngleTo(nearestRune.getX(), self.getY());
-                if (angleTo >= PI / 2) {
-                    move.setSpeed(0);
-                }
-            }
         }
     }
 

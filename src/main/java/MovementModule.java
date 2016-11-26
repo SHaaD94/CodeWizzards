@@ -67,7 +67,12 @@ class MovementModule implements BehaviourModule {
         Point positionAfterMoving = new Point(self.getX(), self.getY());
         for (double moveSpeed = -game.getWizardBackwardSpeed(); moveSpeed <= game.getWizardForwardSpeed(); moveSpeed += 1) {
             for (double strafeSpeed = -game.getWizardStrafeSpeed(); strafeSpeed <= game.getWizardStrafeSpeed(); strafeSpeed += 1) {
-                double moveAngle = self.getAngle();//moveSpeed < 0 ? self.getAngle() + PI : self.getAngle();
+                double moveAngle = self.getAngle();
+/*
+                if (self.getAngle() < 0) {
+                    moveAngle -= PI;//moveSpeed < 0 ? self.getAngle() + PI : self.getAngle();
+                }
+*/
 
                 Point afterMovingByX = GeometryUtil.getNextIterationPosition(moveSpeed, moveAngle, self.getX(), self.getY());
                 double strafeAngle;
