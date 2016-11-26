@@ -14,7 +14,7 @@ public final class MyStrategy implements Strategy {
 
             LanePointsHolder lanePointsHolder = new LanePointsHolder(game.getMapSize());
             behaviours.add(new DeathCheckerModule(lanePointsHolder));
-            //behaviours.add(new EscapeModule(lanePointsHolder));
+            behaviours.add(new EscapeModule(lanePointsHolder));
             behaviours.add(new RuneModule(lanePointsHolder));
             behaviours.add(new MovementModule(lanePointsHolder));
             behaviours.add(new AttackModule(lanePointsHolder));
