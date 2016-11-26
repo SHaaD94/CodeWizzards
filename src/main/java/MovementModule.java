@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static java.lang.Math.PI;
+
 class MovementModule implements BehaviourModule {
     private final LanePointsHolder lanePointsHolder;
 
@@ -47,20 +49,65 @@ class MovementModule implements BehaviourModule {
             currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
         }
 
-        move.setSpeed(game.getWizardForwardSpeed());
-
+        Point pointToMove = currentPoint;
         if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE) {
             Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
-            move.setTurn(self.getAngleTo(nearestRune.getX(), nearestRune.getY()));
+            //move.setTurn(self.getAngleTo(nearestRune.getX(), nearestRune.getY()));
+            pointToMove = nearestRune;
         }
 
         if (State.getBehaviour() == State.BehaviourType.MOVING || State.getBehaviour() == State.BehaviourType.ESCAPING) {
-            move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
+            //move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
         }
-
-        checkCollisions(self, world, game, move);
+        smartMoveToPoint(self, pointToMove, world, game, move);
+        //checkCollisions(self, world, game, move);
 
         System.out.println(State.getBehaviour());
+    }
+
+    private void smartMoveToPoint(Wizard self, Point pointToMove, World world, Game game, Move move) {
+        double bestMoveSpeed = 0;
+        double bestStrafeSpeed = 0;
+        double minDistance = Double.MAX_VALUE;
+        for (double moveSpeed = -game.getWizardBackwardSpeed(); moveSpeed <= game.getWizardForwardSpeed(); moveSpeed += 1) {
+            for (double strafeSpeed = -game.getWizardStrafeSpeed(); strafeSpeed <= game.getWizardStrafeSpeed(); strafeSpeed += 1) {
+                double moveAngle = self.getAngle();//moveSpeed < 0 ? self.getAngle() + PI : self.getAngle();
+
+                Point afterMovingByX = GeometryUtil.getNextIterationPosition(moveSpeed, moveAngle, self.getX(), self.getY());
+                double strafeAngle = self.getAngle() + 3 * (self.getAngle() <= 0 ? -PI : PI) / 2;
+
+                Point positionAfterMoving = GeometryUtil.getNextIterationPosition(strafeSpeed, strafeAngle, afterMovingByX.getX(), afterMovingByX.getY());
+                double distanceBetweenPoints = GeometryUtil.getDistanceBetweenPoints(positionAfterMoving, pointToMove);
+                if (areCollisionExist(positionAfterMoving, self.getRadius(), world)) {
+                    continue;
+                }
+                if (distanceBetweenPoints <= minDistance) {
+                    minDistance = distanceBetweenPoints;
+                    bestMoveSpeed = moveSpeed;
+                    bestStrafeSpeed = strafeSpeed;
+                }
+            }
+        }
+        move.setSpeed(bestMoveSpeed);
+        move.setStrafeSpeed(bestStrafeSpeed);
+
+        Optional<Tree> collidedTree = getCollidedTree(self, world);
+        if (collidedTree.isPresent()) {
+            Tree tree = collidedTree.get();
+            AttackUtil.setAttackUnit(self, game, move, tree);
+            return;
+        }
+    }
+
+    private boolean areCollisionExist(Point selfPosition, double selfRadius, World world) {
+        Stream<CircularUnit> circularUnitStream = Arrays.stream(world.getWizards()).filter(x -> !x.isMe()).map(x -> (CircularUnit) x);
+        circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getBuildings()).map(x -> (CircularUnit) x));
+        circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getMinions()).map(x -> (CircularUnit) x));
+        circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getTrees()).map(x -> (CircularUnit) x));
+        circularUnitStream = circularUnitStream.filter(x ->
+                GeometryUtil.getDistanceBetweenPoints(selfPosition, x) <= Constants.COLLISION_SEARCH_DISTANCE);
+
+        return circularUnitStream.anyMatch(x -> GeometryUtil.areCollides(selfPosition, selfRadius, x));
     }
 
     private void checkCollisions(Wizard self, World world, Game game, Move move) {
@@ -139,10 +186,6 @@ class MovementModule implements BehaviourModule {
 
     private boolean shouldEscape(Wizard self, World world, Game game, ArrayList<Point> controlPointsForLane) {
         boolean escapeAvailable = State.getCurrentPointIndex() > 0 && State.getCurrentPointIndex() < controlPointsForLane.size();
-        if (shouldRunFromSpawnPoint(self, world, game)) {
-            System.out.println("RUN FOREST RUN");
-            return true;
-        }
         if (!escapeAvailable) {
             return false;
         }
@@ -175,12 +218,6 @@ class MovementModule implements BehaviourModule {
 
         return minionThreatExists && lifeRemaining <= 0.3;
 
-    }
-
-    private boolean shouldRunFromSpawnPoint(Wizard self, World world, Game game) {
-        Point creepSpawnPoint = lanePointsHolder.getCreepSpawnPoint(State.getLaneType());
-        return (self.getDistanceTo(creepSpawnPoint.getX(), creepSpawnPoint.getX()) <= 500)
-                && world.getTickIndex() % game.getFactionMinionAppearanceIntervalTicks() < 100;
     }
 
     private int getLifeAfterMaxDamage(Wizard self, World world, Game game) {

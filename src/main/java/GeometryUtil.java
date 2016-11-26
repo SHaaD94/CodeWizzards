@@ -10,6 +10,10 @@ class GeometryUtil {
         return areCollides(u1.getX(), u1.getY(), u1.getRadius(), u2.getX(), u2.getY(), u2.getRadius());
     }
 
+    public static boolean areCollides(Point u1, double u1Radius, CircularUnit u2) {
+        return areCollides(u1.getX(), u1.getY(), u1Radius, u2.getX(), u2.getY(), u2.getRadius());
+    }
+
     static boolean areCollides(double x1, double y1, double r1, double x2, double y2, double r2) {
         double dx = x2 - x1;
         double dy = y2 - y1;
@@ -17,7 +21,7 @@ class GeometryUtil {
         return Math.pow(dx, 2) + Math.pow(dy, 2) < Math.pow(rr, 2);
     }
 
-    private static Point rotateByAngle(double angle, double x, double y, double xc, double yc) {
+    public static Point rotateByAngle(double angle, double x, double y, double xc, double yc) {
         double newX = Math.cos(angle) * (x - xc) - Math.sin(angle) * (y - yc) + xc;
         double newY = Math.sin(angle) * (x - xc) + Math.cos(angle) * (y - yc) + yc;
         return new Point(newX, newY);

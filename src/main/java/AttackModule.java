@@ -18,10 +18,6 @@ public class AttackModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-        if (State.getBehaviour() == State.BehaviourType.ESCAPING) {
-            return;
-        }
-
         Optional<LivingUnit> min = getUnitToAttack(self.getCastRange(), self, world);
         if (min.isPresent()) {
             LivingUnit x = min.get();
@@ -29,10 +25,15 @@ public class AttackModule implements BehaviourModule {
                     .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange() * 1.5)
                     .filter(wizard -> wizard.getFaction() != self.getFaction()).collect(Collectors.toList());
 
+            boolean shouldFightForRune = shouldFightForRune(self, game, x, wizards);
+            if (State.getBehaviour() == State.BehaviourType.ESCAPING && !shouldFightForRune) {
+                return;
+            }
+
             if ((self.getDistanceTo(x) <= self.getCastRange() * 0.8 || wizards.size() >= 2
                     || State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE)
-                    && !shouldFightForRune(self, game, x, wizards)) {
-                move.setSpeed(-game.getWizardForwardSpeed());
+                    && !shouldFightForRune) {
+                //move.setSpeed(-game.getWizardForwardSpeed());
 
                 int currentPointIndex = getPreviousPointIndex();
 
@@ -40,14 +41,14 @@ public class AttackModule implements BehaviourModule {
                 ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
                 previousPoint = controlPointsForLane.get(currentPointIndex);
 
-                checkIfCurrentPointIsPassed(self, previousPoint);
-                setStrafeSpeed(self, previousPoint, game, move);
+                //checkIfCurrentPointIsPassed(self, previousPoint);
+                //setStrafeSpeed(self, previousPoint, game, move);
             }
             AttackUtil.setAttackUnit(self, game, move, x);
 
             State.setBehaviour(State.BehaviourType.FIGHTING);
         } else {
-            if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE) {
+            if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE && State.getBehaviour() != State.BehaviourType.ESCAPING) {
                 Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
                 double angleTo = self.getAngleTo(nearestRune.getX(), self.getY());
                 if (angleTo >= PI / 2) {
