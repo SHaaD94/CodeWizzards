@@ -38,7 +38,11 @@ class State {
     }
 
     static void increaseCurrentPointIndex() {
-        State.currentPointIndex++;
+        State.increaseCurrentPointIndex(1);
+    }
+
+    static void increaseCurrentPointIndex(int count) {
+        State.currentPointIndex += count;
     }
 
     static int getLastRuneIndex() {

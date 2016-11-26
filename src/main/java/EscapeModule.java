@@ -29,8 +29,8 @@ public class EscapeModule implements BehaviourModule {
             State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
             State.setBehaviour(State.BehaviourType.ESCAPING);
         } else {
-            if (State.getBehaviour() == State.BehaviourType.ESCAPING && controlPointsForLane.size() > State.getCurrentPointIndex() + 1) {
-                State.increaseCurrentPointIndex();
+            if (State.getBehaviour() == State.BehaviourType.ESCAPING && controlPointsForLane.size() > State.getCurrentPointIndex() + 2) {
+                State.increaseCurrentPointIndex(2);
             }
             State.setBehaviour(State.BehaviourType.MOVING);
         }
@@ -72,8 +72,8 @@ public class EscapeModule implements BehaviourModule {
         return Arrays.stream(world.getMinions())
                 .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0))
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> game.getDartRadius() + self.getRadius() >= self.getDistanceTo(x) + self.getRadius()
-                        || game.getOrcWoodcutterAttackRange() + 30 >= self.getDistanceTo(x))
+                .filter(x -> game.getDartRadius() >= self.getDistanceTo(x) + self.getRadius()
+                        || game.getOrcWoodcutterAttackRange() >= self.getDistanceTo(x) + self.getRadius())
                 .findFirst().isPresent();
     }
 

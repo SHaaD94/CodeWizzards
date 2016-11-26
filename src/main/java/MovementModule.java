@@ -24,7 +24,7 @@ class MovementModule implements BehaviourModule {
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
 
         if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
-            if (State.getBehaviour() == State.BehaviourType.NONE) {
+            if (State.getBehaviour() == State.BehaviourType.NONE || State.getBehaviour() == State.BehaviourType.DEAD) {
                 State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
                 State.setBehaviour(State.BehaviourType.MOVING);
             } else if (State.getBehaviour() != State.BehaviourType.MOVING
@@ -46,16 +46,10 @@ class MovementModule implements BehaviourModule {
 
         Point pointToMove = currentPoint;
         if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE) {
-            Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
-            //move.setTurn(self.getAngleTo(nearestRune.getX(), nearestRune.getY()));
-            pointToMove = nearestRune;
+            pointToMove = Utils.getNearestRune(lanePointsHolder, self);
         }
 
-        if (State.getBehaviour() == State.BehaviourType.MOVING || State.getBehaviour() == State.BehaviourType.ESCAPING) {
-            //move.setTurn(self.getAngleTo(currentPoint.getX(), currentPoint.getY()));
-        }
         smartMoveToPoint(self, pointToMove, world, game, move);
-        //checkCollisions(self, world, game, move);
 
         System.out.println(State.getBehaviour());
     }
@@ -68,18 +62,13 @@ class MovementModule implements BehaviourModule {
         for (double moveSpeed = -game.getWizardBackwardSpeed(); moveSpeed <= game.getWizardForwardSpeed(); moveSpeed += 1) {
             for (double strafeSpeed = -game.getWizardStrafeSpeed(); strafeSpeed <= game.getWizardStrafeSpeed(); strafeSpeed += 1) {
                 double moveAngle = self.getAngle();
-/*
-                if (self.getAngle() < 0) {
-                    moveAngle -= PI;//moveSpeed < 0 ? self.getAngle() + PI : self.getAngle();
-                }
-*/
 
                 Point afterMovingByX = GeometryUtil.getNextIterationPosition(moveSpeed, moveAngle, self.getX(), self.getY());
                 double strafeAngle;
                 if (self.getAngle() <= 0) {
-                    strafeAngle = self.getAngle() + 3 * (self.getAngle() <= 0 ? -PI : PI) / 2; //3PI/2
+                    strafeAngle = self.getAngle() + 3 * (self.getAngle() <= 0 ? -PI : PI) / 2; // 3PI/2
                 } else {
-                    strafeAngle = self.getAngle() + (self.getAngle() <= 0 ? -PI : PI) / 2; //3PI/2
+                    strafeAngle = self.getAngle() + (self.getAngle() <= 0 ? -PI : PI) / 2; // PI/2
                 }
 
                 positionAfterMoving = GeometryUtil.getNextIterationPosition(strafeSpeed, strafeAngle, afterMovingByX.getX(), afterMovingByX.getY());
@@ -96,17 +85,30 @@ class MovementModule implements BehaviourModule {
             }
         }
 
-        final Point finalPosition = positionAfterMoving;
-        Optional<Tree> collidedTree = Arrays.stream(world.getTrees())
-                .filter(x -> GeometryUtil.areCollides(finalPosition.getX(), finalPosition.getY(), self.getRadius() + 10,
-                        x.getX(), x.getY(), x.getRadius()))
-                .findFirst();
-        if (collidedTree.isPresent()) {
-            Tree tree = collidedTree.get();
-            AttackUtil.setAttackUnit(self, game, move, tree);
+        Optional<Tree> collidedTree = getCollidedTree(self, world, positionAfterMoving);
+
+        collidedTree.ifPresent(tree -> AttackUtil.setAttackUnit(self, game, move, tree));
+
+        if (!collidedTree.isPresent() && !anyTargetExists(self, world)) {
+            move.setTurn(self.getAngleTo(pointToMove.getX(), pointToMove.getY()));
         }
+
         move.setSpeed(bestMoveSpeed);
         move.setStrafeSpeed(bestStrafeSpeed);
+    }
+
+    private boolean anyTargetExists(Wizard self, World world) {
+        return Utils.getLivingUnitStream(world)
+                .filter(x -> x.getFaction() != self.getFaction())
+                .anyMatch(x -> self.getDistanceTo(x) <= self.getCastRange() + x.getRadius());
+    }
+
+    private Optional<Tree> getCollidedTree(Wizard self, World world, Point finalPosition) {
+        return Arrays.stream(world.getTrees())
+                .filter(x -> self.getDistanceTo(x) <= self.getCastRange())
+                .filter(x -> GeometryUtil.areCollides(finalPosition.getX(), finalPosition.getY(), self.getRadius() + 10,
+                        x.getX(), x.getY(), x.getRadius()))
+                .min((o1, o2) -> Double.compare(self.getDistanceTo(o1), self.getDistanceTo(o2)));
     }
 
     private boolean areCollisionExist(Point selfPosition, double selfRadius, World world) {

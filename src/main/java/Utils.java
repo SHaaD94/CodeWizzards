@@ -1,9 +1,11 @@
 import model.Faction;
+import model.LivingUnit;
 import model.Wizard;
 import model.World;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * Created by SHaaD on 19.11.2016.
@@ -66,8 +68,12 @@ class Utils {
         return !(wizardIsPresent || buildingIsPresent || enemyMinionCount >= 2);
     }
 
-    static Point getNearestControlPoint(Wizard self, List<Point> points) {
-        return points.get(getNearestControlPointIndex(self, points));
+    static Stream<LivingUnit> getLivingUnitStream(World world) {
+        Stream<LivingUnit> units = Arrays.stream(world.getWizards());
+        units = Stream.concat(units, Arrays.stream(world.getBuildings()));
+        units = Stream.concat(units, Arrays.stream(world.getMinions())
+                .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0)));
+        return units;
     }
 
 }

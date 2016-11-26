@@ -1,6 +1,5 @@
 import model.*;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -24,7 +23,7 @@ public class AttackModule implements BehaviourModule {
     }
 
     private Optional<LivingUnit> getUnitToAttack(Double scanDistance, Wizard self, World world) {
-        Stream<LivingUnit> units = getLivingUnitStream(world);
+        Stream<LivingUnit> units = Utils.getLivingUnitStream(world);
 
         return units
                 .filter(x -> x.getFaction() != self.getFaction())
@@ -38,14 +37,6 @@ public class AttackModule implements BehaviourModule {
 
                     return compareDistanceResult;
                 });
-    }
-
-    private Stream<LivingUnit> getLivingUnitStream(World world) {
-        Stream<LivingUnit> units = Arrays.stream(world.getWizards());
-        units = Stream.concat(units, Arrays.stream(world.getBuildings()));
-        units = Stream.concat(units, Arrays.stream(world.getMinions())
-                .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0)));
-        return units;
     }
 
     private Double getDistanceToMe(Wizard self, LivingUnit o1) {
