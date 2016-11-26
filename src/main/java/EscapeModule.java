@@ -17,7 +17,7 @@ public class EscapeModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-        ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
+        ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLane());
 
         List<Wizard> wizards = Arrays.stream(world.getWizards())
                 .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange())
@@ -32,6 +32,7 @@ public class EscapeModule implements BehaviourModule {
             if (State.getBehaviour() == State.BehaviourType.ESCAPING && controlPointsForLane.size() > State.getCurrentPointIndex() + 2) {
                 State.increaseCurrentPointIndex(2);
             }
+
             State.setBehaviour(State.BehaviourType.MOVING);
         }
 
@@ -48,7 +49,7 @@ public class EscapeModule implements BehaviourModule {
         }
         boolean buildingThreatExists = Arrays.stream(world.getBuildings())
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 300)
+                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 100)
                 .findAny().isPresent();
         if (buildingThreatExists) {
             return true;
@@ -72,8 +73,7 @@ public class EscapeModule implements BehaviourModule {
         return Arrays.stream(world.getMinions())
                 .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0))
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> game.getDartRadius() >= self.getDistanceTo(x) + self.getRadius()
-                        || game.getOrcWoodcutterAttackRange() >= self.getDistanceTo(x) + self.getRadius())
+                .filter(x -> self.getDistanceTo(x) + self.getRadius() <= 100)
                 .findFirst().isPresent();
     }
 

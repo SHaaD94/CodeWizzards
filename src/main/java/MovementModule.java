@@ -16,15 +16,11 @@ class MovementModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-        if (self.getLife() == 0) {
-            State.setBehaviour(State.BehaviourType.DEAD);
-            return;
-        }
 
-        ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLaneType());
+        ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLane());
 
         if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
-            if (State.getBehaviour() == State.BehaviourType.NONE || State.getBehaviour() == State.BehaviourType.DEAD) {
+            if (State.getBehaviour() == State.BehaviourType.NONE) {
                 State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
                 State.setBehaviour(State.BehaviourType.MOVING);
             } else if (State.getBehaviour() != State.BehaviourType.MOVING
@@ -45,7 +41,8 @@ class MovementModule implements BehaviourModule {
         }
 
         Point pointToMove = currentPoint;
-        if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE) {
+        if (State.getBehaviour() == State.BehaviourType.GOING_FOR_RUNE
+                && State.getBehaviour() != State.BehaviourType.ESCAPING) {
             pointToMove = Utils.getNearestRune(lanePointsHolder, self);
         }
 
@@ -116,6 +113,7 @@ class MovementModule implements BehaviourModule {
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getBuildings()).map(x -> (CircularUnit) x));
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getMinions()).map(x -> (CircularUnit) x));
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getTrees()).map(x -> (CircularUnit) x));
+
         circularUnitStream = circularUnitStream.filter(x ->
                 GeometryUtil.getDistanceBetweenPoints(selfPosition, x) <= Constants.COLLISION_SEARCH_DISTANCE);
 

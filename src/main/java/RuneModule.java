@@ -18,6 +18,7 @@ class RuneModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
+
         if (shouldGoForRune(self, world, game)) {
             Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
 

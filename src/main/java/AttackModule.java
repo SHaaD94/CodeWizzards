@@ -12,6 +12,7 @@ public class AttackModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
+
         Optional<LivingUnit> min = getUnitToAttack(self.getCastRange(), self, world);
         if (min.isPresent()) {
             LivingUnit x = min.get();
@@ -40,6 +41,6 @@ public class AttackModule implements BehaviourModule {
     }
 
     private Double getDistanceToMe(Wizard self, LivingUnit o1) {
-        return o1.getDistanceTo(self) + o1.getRadius() * 0.2;
+        return o1.getDistanceTo(self) + o1.getRadius() * 0.8;
     }
 }

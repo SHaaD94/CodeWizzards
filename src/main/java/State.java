@@ -53,7 +53,7 @@ class State {
         lastRuneIndex++;
     }
 
-    static LaneType getLaneType() {
+    static LaneType getLane() {
         return laneType;
     }
 
