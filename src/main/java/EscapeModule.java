@@ -20,22 +20,31 @@ public class EscapeModule implements BehaviourModule {
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLane());
 
         List<Wizard> wizards = Arrays.stream(world.getWizards())
-                .filter(wizard -> self.getDistanceTo(wizard) <= wizard.getCastRange())
+                .filter(wizard -> self.getDistanceTo(wizard) + self.getRadius() <= wizard.getCastRange())
                 .filter(wizard -> wizard.getFaction() != self.getFaction()).collect(Collectors.toList());
 
-        if (shouldEscape(self, world, game, controlPointsForLane)
-                || wizards.size() >= 2
-                || isMinionThreatExists(self, world, game)) {
+        if (shouldEscape(self, world, game, controlPointsForLane)) {
             State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
             State.setBehaviour(State.BehaviourType.ESCAPING);
-        } else {
-            if (State.getBehaviour() == State.BehaviourType.ESCAPING && controlPointsForLane.size() > State.getCurrentPointIndex() + 2) {
-                State.increaseCurrentPointIndex(2);
-            }
-
-            State.setBehaviour(State.BehaviourType.MOVING);
+            return;
         }
 
+        if (shouldRetreat(self, world, game, wizards)) {
+            int nearestControlPointIndex = Utils.getNearestControlPointIndex(self, controlPointsForLane);
+            State.setCurrentPointIndex(nearestControlPointIndex > 1 ? nearestControlPointIndex - 1 : 0);
+            State.setBehaviour(State.BehaviourType.RETREATING);
+            return;
+        }
+
+        if (State.getBehaviour() == State.BehaviourType.ESCAPING && controlPointsForLane.size() > State.getCurrentPointIndex() + 2) {
+            State.increaseCurrentPointIndex(2);
+        }
+
+        State.setBehaviour(State.BehaviourType.MOVING);
+    }
+
+    private boolean shouldRetreat(Wizard self, World world, Game game, List<Wizard> wizards) {
+        return wizards.size() >= 2 || isMinionThreatExists(self, world, game);
     }
 
     private boolean shouldEscape(Wizard self, World world, Game game, ArrayList<Point> controlPointsForLane) {
@@ -47,10 +56,7 @@ public class EscapeModule implements BehaviourModule {
         if (lifeRemaining >= Constants.HP_TO_ESCAPE) {
             return false;
         }
-        boolean buildingThreatExists = Arrays.stream(world.getBuildings())
-                .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 100)
-                .findAny().isPresent();
+        boolean buildingThreatExists = isBuildingThreatExists(self, world);
         if (buildingThreatExists) {
             return true;
         }
@@ -69,11 +75,18 @@ public class EscapeModule implements BehaviourModule {
 
     }
 
+    private boolean isBuildingThreatExists(Wizard self, World world) {
+        return Arrays.stream(world.getBuildings())
+                .filter(x -> x.getFaction() != self.getFaction())
+                .filter(x -> self.getDistanceTo(x) <= x.getAttackRange() + 100)
+                .findAny().isPresent();
+    }
+
     private boolean isMinionThreatExists(Wizard self, World world, Game game) {
         return Arrays.stream(world.getMinions())
                 .filter(x -> !(x.getFaction() == Faction.NEUTRAL && x.getRemainingActionCooldownTicks() == 0))
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) + self.getRadius() <= 100)
+                .filter(x -> self.getDistanceTo(x) + self.getRadius() <= 200)
                 .findFirst().isPresent();
     }
 
@@ -88,7 +101,7 @@ public class EscapeModule implements BehaviourModule {
         List<Building> buildings = Arrays.stream(world.getBuildings())
                 .filter(x -> x.getFaction() != self.getFaction())
                 .filter(x -> self.getDistanceTo(x) - self.getRadius() <= x.getAttackRange() + 50)
-                .filter(x -> x.getRemainingActionCooldownTicks() <= 50)
+                .filter(x -> x.getRemainingActionCooldownTicks() <= 150)
                 .collect(Collectors.toList());
 
         List<Wizard> wizards = Arrays.stream(world.getWizards())

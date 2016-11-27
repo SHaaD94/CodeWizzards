@@ -12,7 +12,12 @@ public class AttackModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-
+        if (State.isCuttingTree()) {
+            return;
+        }
+        if (State.getBehaviour() == State.BehaviourType.ESCAPING) {
+            return;
+        }
         Optional<LivingUnit> min = getUnitToAttack(self.getCastRange(), self, world);
         if (min.isPresent()) {
             LivingUnit x = min.get();
@@ -21,6 +26,7 @@ public class AttackModule implements BehaviourModule {
 
             State.setBehaviour(State.BehaviourType.FIGHTING);
         }
+
     }
 
     private Optional<LivingUnit> getUnitToAttack(Double scanDistance, Wizard self, World world) {

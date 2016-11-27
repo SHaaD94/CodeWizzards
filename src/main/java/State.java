@@ -13,6 +13,8 @@ class State {
 
     private static LaneType laneType;
 
+    private static boolean cuttingTree;
+
     static BehaviourType getBehaviour() {
         return behaviour;
     }
@@ -61,12 +63,21 @@ class State {
         State.laneType = laneType;
     }
 
+    public static boolean isCuttingTree() {
+        return cuttingTree;
+    }
+
+    public static void setCuttingTree(boolean cuttingTree) {
+        State.cuttingTree = cuttingTree;
+    }
+
     enum BehaviourType {
         NONE,
         DEAD,
         MOVING,
         FIGHTING,
         ESCAPING,
+        RETREATING,
         GOING_FOR_RUNE
     }
 }

@@ -19,7 +19,8 @@ class MovementModule implements BehaviourModule {
 
         ArrayList<Point> controlPointsForLane = lanePointsHolder.getControlPointsForLane(State.getLane());
 
-        if (State.getBehaviour() != State.BehaviourType.ESCAPING) {
+        if (State.getBehaviour() != State.BehaviourType.ESCAPING
+                && State.getBehaviour() != State.BehaviourType.RETREATING) {
             if (State.getBehaviour() == State.BehaviourType.NONE) {
                 State.setCurrentPointIndex(Utils.getNearestSafeControlPointIndex(self, world, controlPointsForLane));
                 State.setBehaviour(State.BehaviourType.MOVING);
@@ -33,7 +34,9 @@ class MovementModule implements BehaviourModule {
         Point currentPoint = controlPointsForLane.get(State.getCurrentPointIndex());
 
         double distanceToPoint = self.getDistanceTo(currentPoint.getX(), currentPoint.getY());
-        if (distanceToPoint <= Constants.POINT_RADIUS && State.getBehaviour() != State.BehaviourType.ESCAPING) {
+        if (distanceToPoint <= Constants.POINT_RADIUS
+                && State.getBehaviour() != State.BehaviourType.ESCAPING
+                && State.getBehaviour() != State.BehaviourType.RETREATING) {
             if (State.getCurrentPointIndex() + 1 < controlPointsForLane.size()) {
                 State.increaseCurrentPointIndex();
             }
@@ -71,7 +74,7 @@ class MovementModule implements BehaviourModule {
                 positionAfterMoving = GeometryUtil.getNextIterationPosition(strafeSpeed, strafeAngle, afterMovingByX.getX(), afterMovingByX.getY());
                 double distanceBetweenPoints = GeometryUtil.getDistanceBetweenPoints(positionAfterMoving, pointToMove);
                 if (mapCollisionsExist(self, positionAfterMoving, world)
-                        || areCollisionExist(positionAfterMoving, self.getRadius(), world)) {
+                        || areCollisionExist(positionAfterMoving, self.getRadius() + 5, world)) {
                     continue;
                 }
                 if (distanceBetweenPoints <= minDistance) {
@@ -82,11 +85,17 @@ class MovementModule implements BehaviourModule {
             }
         }
 
+        State.setCuttingTree(false);
+
         Optional<Tree> collidedTree = getCollidedTree(self, world, positionAfterMoving);
 
-        collidedTree.ifPresent(tree -> AttackUtil.setAttackUnit(self, game, move, tree));
+        collidedTree.ifPresent(tree -> {
+            State.setCuttingTree(true);
+            AttackUtil.setAttackUnit(self, game, move, tree);
+        });
 
-        if (!collidedTree.isPresent() && !anyTargetExists(self, world)) {
+        if ((!collidedTree.isPresent() && !anyTargetExists(self, world))
+                || State.getBehaviour() == State.BehaviourType.ESCAPING) {
             move.setTurn(self.getAngleTo(pointToMove.getX(), pointToMove.getY()));
         }
 

@@ -18,7 +18,6 @@ class RuneModule implements BehaviourModule {
 
     @Override
     public void updateMove(Wizard self, World world, Game game, Move move) {
-
         if (shouldGoForRune(self, world, game)) {
             Point nearestRune = Utils.getNearestRune(lanePointsHolder, self);
 
@@ -32,8 +31,6 @@ class RuneModule implements BehaviourModule {
             if (distanceToNearestRune <= self.getRadius()) {
                 runePickedUpOrDoesntExist = true;
             } else if (distanceToNearestRune <= self.getVisionRange() && bonusCount != 0) {
-                runePickedUpOrDoesntExist = false;
-            } else if (runeMayExistRightNow(world, game)) {
                 runePickedUpOrDoesntExist = false;
             } else if (runeMayAppearAfterReaching(self, world, game, distanceToNearestRune)) {
                 runePickedUpOrDoesntExist = false;
@@ -56,12 +53,13 @@ class RuneModule implements BehaviourModule {
     }
 
     private boolean runeMayAppearAfterReaching(Wizard self, World world, Game game, double distanceToNearestRune) {
-        return (world.getTickIndex() + getTicksToReachRune(self, game, distanceToNearestRune)) /
+        return (world.getTickIndex() + getTicksToReachRune(self, game, distanceToNearestRune)) + 10 /
                 game.getBonusAppearanceIntervalTicks() > world.getTickIndex() / game.getBonusAppearanceIntervalTicks();
     }
 
     private boolean shouldGoForRune(Wizard self, World world, Game game) {
         if (State.getBehaviour() == State.BehaviourType.ESCAPING) {
+            //todo check this out
             return false;
         }
 
