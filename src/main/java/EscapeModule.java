@@ -63,7 +63,7 @@ public class EscapeModule implements BehaviourModule {
 
         boolean wizardThreatExists = Arrays.stream(world.getWizards())
                 .filter(x -> x.getFaction() != self.getFaction())
-                .filter(x -> self.getDistanceTo(x) <= x.getCastRange() + 50)
+                .filter(x -> self.getDistanceTo(x) + self.getRadius() <= x.getCastRange() + 50)
                 .findAny().isPresent();
         if (wizardThreatExists) {
             return true;

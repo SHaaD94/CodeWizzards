@@ -65,7 +65,7 @@ class Utils {
                 .filter(x -> x.getFaction() != Faction.NEUTRAL && x.getFaction() != self.getFaction())
                 .filter(x -> GeometryUtil.getDistanceBetweenPoints(point, x) <= Constants.POINT_SAFE_RANGE)
                 .count();
-        return !(wizardIsPresent || buildingIsPresent || enemyMinionCount >= 2);
+        return !(wizardIsPresent || buildingIsPresent || enemyMinionCount > 1);
     }
 
     static Stream<LivingUnit> getLivingUnitStream(World world) {

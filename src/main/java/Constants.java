@@ -6,7 +6,7 @@ class Constants {
 
     final static int COLLISION_SEARCH_DISTANCE = 500;
 
-    final static int POINT_SAFE_RANGE = 700;
+    final static int POINT_SAFE_RANGE = 500;
 
     final static int RUNE_ATTRACT_RADIUS = 600;
     final static int RUNE_SCAN_DISTANCE = 900;

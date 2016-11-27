@@ -20,6 +20,7 @@ class LanePointsHolder {
         lane2PointListMap = new EnumMap<LaneType, ArrayList<Point>>(LaneType.class) {
             {
                 put(LaneType.TOP, new ArrayList<Point>() {{
+                    add(new Point(0.01 * mapSize, 0.99 * mapSize));
                     add(new Point(0.05 * mapSize, 0.95 * mapSize));
                     add(new Point(0.05 * mapSize, 0.90 * mapSize));
                     add(new Point(0.05 * mapSize, 0.85 * mapSize));
@@ -58,6 +59,7 @@ class LanePointsHolder {
                     add(new Point(0.95 * mapSize, 0.05 * mapSize));
                 }});
                 put(LaneType.BOTTOM, new ArrayList<Point>() {{
+                    add(new Point(0.01 * mapSize, 0.99 * mapSize));
                     add(new Point(0.05 * mapSize, 0.95 * mapSize));
                     add(new Point(0.10 * mapSize, 0.95 * mapSize));
                     add(new Point(0.15 * mapSize, 0.95 * mapSize));
@@ -98,10 +100,9 @@ class LanePointsHolder {
                 }});
 
                 put(LaneType.MIDDLE, new ArrayList<Point>() {{
-/*
+                    add(new Point(0.01 * mapSize, 0.99 * mapSize));
                     add(new Point(0.05 * mapSize, 0.95 * mapSize));
                     add(new Point(0.05 * mapSize, 0.85 * mapSize));
-*/
                     add(new Point(0.15 * mapSize, 0.85 * mapSize));
                     add(new Point(0.20 * mapSize, 0.80 * mapSize));
                     add(new Point(0.25 * mapSize, 0.75 * mapSize));
