@@ -98,8 +98,10 @@ class LanePointsHolder {
                 }});
 
                 put(LaneType.MIDDLE, new ArrayList<Point>() {{
+/*
                     add(new Point(0.05 * mapSize, 0.95 * mapSize));
                     add(new Point(0.05 * mapSize, 0.85 * mapSize));
+*/
                     add(new Point(0.15 * mapSize, 0.85 * mapSize));
                     add(new Point(0.20 * mapSize, 0.80 * mapSize));
                     add(new Point(0.25 * mapSize, 0.75 * mapSize));
@@ -161,6 +163,14 @@ class LanePointsHolder {
                 add(new Point(0.6 * mapSize, 0.5 * mapSize));
                 add(new Point(0.6 * mapSize, 0.6 * mapSize));
                 add(new Point(0.5 * mapSize, 0.6 * mapSize));
+                add(new Point(0.65 * mapSize, 0.45 * mapSize));
+                add(new Point(0.65 * mapSize, 0.55 * mapSize));
+                add(new Point(0.55 * mapSize, 0.65 * mapSize));
+                add(new Point(0.45 * mapSize, 0.65 * mapSize));
+                add(new Point(0.35 * mapSize, 0.55 * mapSize));
+                add(new Point(0.35 * mapSize, 0.45 * mapSize));
+                add(new Point(0.45 * mapSize, 0.35 * mapSize));
+                add(new Point(0.55 * mapSize, 0.35 * mapSize));
             }
         };
 

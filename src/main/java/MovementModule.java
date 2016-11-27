@@ -61,20 +61,19 @@ class MovementModule implements BehaviourModule {
         Point positionAfterMoving = new Point(self.getX(), self.getY());
         for (double moveSpeed = -game.getWizardBackwardSpeed(); moveSpeed <= game.getWizardForwardSpeed(); moveSpeed += 1) {
             for (double strafeSpeed = -game.getWizardStrafeSpeed(); strafeSpeed <= game.getWizardStrafeSpeed(); strafeSpeed += 1) {
-                double moveAngle = self.getAngle();
-
-                Point afterMovingByX = GeometryUtil.getNextIterationPosition(moveSpeed, moveAngle, self.getX(), self.getY());
-                double strafeAngle;
-                if (self.getAngle() <= 0) {
-                    strafeAngle = self.getAngle() + 3 * (self.getAngle() <= 0 ? -PI : PI) / 2; // 3PI/2
-                } else {
-                    strafeAngle = self.getAngle() + (self.getAngle() <= 0 ? -PI : PI) / 2; // PI/2
-                }
-
-                positionAfterMoving = GeometryUtil.getNextIterationPosition(strafeSpeed, strafeAngle, afterMovingByX.getX(), afterMovingByX.getY());
+                //most epic crutch ever, used cuz round starts in 2 hours
+                positionAfterMoving = getPositionAfterMoving(self, moveSpeed, strafeSpeed);
+                Point positionAfter5Moves = getPositionAfterMoving(self, moveSpeed * 5, strafeSpeed * 5);
+                Point positionAfter10Moves = getPositionAfterMoving(self, moveSpeed * 10, strafeSpeed * 10);
+                Point positionAfter30Moves = getPositionAfterMoving(self, moveSpeed * 20, strafeSpeed * 20);
+                Point positionAfter20Moves = getPositionAfterMoving(self, moveSpeed * 30, strafeSpeed * 30);
                 double distanceBetweenPoints = GeometryUtil.getDistanceBetweenPoints(positionAfterMoving, pointToMove);
                 if (mapCollisionsExist(self, positionAfterMoving, world)
-                        || areCollisionExist(positionAfterMoving, self.getRadius() + 5, world)) {
+                        || areCollisionExist(positionAfterMoving, self.getRadius(), world)
+                        || areCollisionExist(positionAfter5Moves, self.getRadius(), world)
+                        || areCollisionExist(positionAfter10Moves, self.getRadius(), world)
+                        || areCollisionExist(positionAfter20Moves, self.getRadius(), world)
+                        || areCollisionExist(positionAfter30Moves, self.getRadius(), world)) {
                     continue;
                 }
                 if (distanceBetweenPoints <= minDistance) {
@@ -95,12 +94,28 @@ class MovementModule implements BehaviourModule {
         });
 
         if ((!collidedTree.isPresent() && !anyTargetExists(self, world))
-                || State.getBehaviour() == State.BehaviourType.ESCAPING) {
+                || (State.getBehaviour() == State.BehaviourType.ESCAPING && !collidedTree.isPresent())) {
             move.setTurn(self.getAngleTo(pointToMove.getX(), pointToMove.getY()));
         }
 
         move.setSpeed(bestMoveSpeed);
         move.setStrafeSpeed(bestStrafeSpeed);
+    }
+
+    private Point getPositionAfterMoving(Wizard self, double moveSpeed, double strafeSpeed) {
+        Point positionAfterMoving;
+        double moveAngle = self.getAngle();
+
+        Point afterMovingByX = GeometryUtil.getNextIterationPosition(moveSpeed, moveAngle, self.getX(), self.getY());
+        double strafeAngle;
+        if (self.getAngle() <= 0) {
+            strafeAngle = self.getAngle() + 3 * (self.getAngle() <= 0 ? -PI : PI) / 2; // 3PI/2
+        } else {
+            strafeAngle = self.getAngle() + (self.getAngle() <= 0 ? -PI : PI) / 2; // PI/2
+        }
+
+        positionAfterMoving = GeometryUtil.getNextIterationPosition(strafeSpeed, strafeAngle, afterMovingByX.getX(), afterMovingByX.getY());
+        return positionAfterMoving;
     }
 
     private boolean anyTargetExists(Wizard self, World world) {
@@ -121,7 +136,7 @@ class MovementModule implements BehaviourModule {
         Stream<CircularUnit> circularUnitStream = Arrays.stream(world.getWizards()).filter(x -> !x.isMe()).map(x -> (CircularUnit) x);
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getBuildings()).map(x -> (CircularUnit) x));
         circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getMinions()).map(x -> (CircularUnit) x));
-        circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getTrees()).map(x -> (CircularUnit) x));
+        //circularUnitStream = Stream.concat(circularUnitStream, Arrays.stream(world.getTrees()).map(x -> (CircularUnit) x));
 
         circularUnitStream = circularUnitStream.filter(x ->
                 GeometryUtil.getDistanceBetweenPoints(selfPosition, x) <= Constants.COLLISION_SEARCH_DISTANCE);
