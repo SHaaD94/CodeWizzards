@@ -48,10 +48,6 @@ class RuneModule implements BehaviourModule {
 
     }
 
-    private boolean runeMayExistRightNow(World world, Game game) {
-        return world.getTickIndex() / game.getBonusAppearanceIntervalTicks() > State.getLastRuneIndex();
-    }
-
     private boolean runeMayAppearAfterReaching(Wizard self, World world, Game game, double distanceToNearestRune) {
         return (world.getTickIndex() + getTicksToReachRune(self, game, distanceToNearestRune)) + 10 /
                 game.getBonusAppearanceIntervalTicks() > world.getTickIndex() / game.getBonusAppearanceIntervalTicks();
@@ -59,7 +55,6 @@ class RuneModule implements BehaviourModule {
 
     private boolean shouldGoForRune(Wizard self, World world, Game game) {
         if (State.getBehaviour() == State.BehaviourType.ESCAPING) {
-            //todo check this out
             return false;
         }
 
